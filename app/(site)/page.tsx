@@ -126,25 +126,18 @@ export default function HomePage() {
       <section className="px-4 py-10" style={{ background: '#0A0A0A' }}>
         <div className="max-w-4xl mx-auto">
           <div
-            className="rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4"
+            className="rounded-2xl p-5 flex items-start gap-4"
             style={{ background: '#12101C', border: '1px solid rgba(200,136,58,0.3)' }}
           >
             <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(200,136,58,0.15)', color: '#C8883A' }}>
               <Car size={20} />
             </div>
-            <div className="flex-1">
+            <div>
               <p className="font-semibold text-sm mb-0.5" style={{ color: '#F0ECF0' }}>Taxa de deslocamento</p>
               <p className="text-sm" style={{ color: '#9A8A96' }}>
-                Até <strong style={{ color: '#F0ECF0' }}>1 km</strong> do ponto de partida é <strong style={{ color: '#4ade80' }}>grátis</strong>. A partir daí, <strong style={{ color: '#F0ECF0' }}>R$ 5,00 por km</strong> adicional — calculado automaticamente ao inserir seu CEP no agendamento.
+                Até <strong style={{ color: '#F0ECF0' }}>1 km</strong> do ponto de partida é <strong style={{ color: '#4ade80' }}>grátis</strong>. A partir daí, <strong style={{ color: '#F0ECF0' }}>R$ 5,00 por km</strong> adicional.
               </p>
             </div>
-            <Link
-              href="/agendar"
-              className="text-xs px-4 py-2 rounded-full font-semibold shrink-0 transition-all hover:scale-105"
-              style={{ background: 'rgba(200,136,58,0.15)', color: '#C8883A', border: '1px solid rgba(200,136,58,0.3)' }}
-            >
-              Calcular frete
-            </Link>
           </div>
         </div>
       </section>
