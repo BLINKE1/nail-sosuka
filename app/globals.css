@@ -1,26 +1,113 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  --color-bg: #0A0A0A;
+  --color-surface: #12101C;
+  --color-surface-2: #1C1828;
+  --color-surface-3: #261E34;
+  --color-primary: #D4789C;
+  --color-primary-dark: #A0587C;
+  --color-primary-light: #E8A4C0;
+  --color-secondary: #7B1C2A;
+  --color-accent: #C8883A;
+  --color-navy: #1A1F3A;
+  --color-text: #F0ECF0;
+  --color-text-muted: #9A8A96;
+  --color-border: rgba(212,120,156,0.2);
+  --color-border-strong: rgba(212,120,156,0.4);
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --animate-fade-in: fade-in 0.5s ease forwards;
+  --animate-slide-up: slide-up 0.5s ease forwards;
+  --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(212, 120, 156, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(212, 120, 156, 0.6); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #0A0A0A;
+  color: #F0ECF0;
+  font-family: var(--font-geist-sans), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #12101C;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4789C;
+  border-radius: 3px;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #D4789C 0%, #E8A4C0 50%, #C8883A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-border {
+  background: linear-gradient(#12101C, #12101C) padding-box,
+              linear-gradient(135deg, #D4789C, #C8883A) border-box;
+  border: 1px solid transparent;
+}
+
+.shimmer-text {
+  background: linear-gradient(90deg, #D4789C 0%, #E8A4C0 30%, #C8883A 50%, #E8A4C0 70%, #D4789C 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+.glass-card {
+  background: rgba(18, 16, 28, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 120, 156, 0.2);
+}
+
+.glow-primary {
+  box-shadow: 0 0 24px rgba(212, 120, 156, 0.4);
+}
+
+input, select, textarea {
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #D4789C !important;
+  box-shadow: 0 0 0 2px rgba(212, 120, 156, 0.2);
 }
