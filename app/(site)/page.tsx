@@ -15,9 +15,7 @@ const STEPS = [
 ];
 
 const DIFERENCIAIS = [
-  { icon: '💎', title: 'Produtos Premium', desc: 'Usamos apenas marcas selecionadas para garantir duração e brilho.' },
   { icon: '⏱️', title: 'Pontualidade', desc: 'Respeitamos o seu tempo. Agendamentos sem espera desnecessária.' },
-  { icon: '🎨', title: 'Arte Exclusiva', desc: 'Designs únicos e personalizados para expressar sua personalidade.' },
   { icon: '🛡️', title: 'Higiene Total', desc: 'Materiais esterilizados e ambiente sempre limpo para sua segurança.' },
 ];
 
