@@ -97,9 +97,6 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-xs mt-4" style={{ color: '#9A8A96' }}>
-          Senha padrão: <code className="px-1 py-0.5 rounded" style={{ background: '#1C1828', color: '#D4789C' }}>sosuka2024</code>
-        </p>
       </div>
     </div>
   );
