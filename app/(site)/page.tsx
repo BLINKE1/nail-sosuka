@@ -3,18 +3,20 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Shield, Sparkles, CalendarCheck, Star } from 'lucide-react';
+import { ArrowRight, Shield, Sparkles, CalendarCheck, Star, MapPin, Car, AlertCircle } from 'lucide-react';
 import ServiceCard from '@/components/ServiceCard';
 import { getActiveServices } from '@/lib/store';
 import { Service } from '@/lib/types';
+import { SIGNAL_PERCENT, CANCELLATION_HOURS, CANCELLATION_REFUND_PERCENT } from '@/lib/transport';
 
 const STEPS = [
   { icon: <Sparkles size={22} />, title: 'Escolha o Serviço', desc: 'Navegue pelos nossos serviços e escolha o que mais combina com você.' },
   { icon: <CalendarCheck size={22} />, title: 'Selecione Data e Horário', desc: 'Veja os horários disponíveis e escolha o mais conveniente.' },
-  { icon: <Star size={22} />, title: 'Confirme e Apareça', desc: 'Receba a confirmação e venha arrasar com suas novas unhas!' },
+  { icon: <Star size={22} />, title: 'Confirme e Apareça', desc: 'Confirmamos pelo WhatsApp e vamos até você!' },
 ];
 
 const DIFERENCIAIS = [
+  { icon: '🏠', title: 'Vai até você', desc: 'Atendimento 100% a domicílio. Você fica no conforto da sua casa enquanto cuida das suas unhas.' },
   { icon: '⏱️', title: 'Pontualidade', desc: 'Respeitamos o seu tempo. Agendamentos sem espera desnecessária.' },
   { icon: '🛡️', title: 'Higiene Total', desc: 'Materiais esterilizados e ambiente sempre limpo para sua segurança.' },
 ];
@@ -36,14 +38,28 @@ export default function HomePage() {
         <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center gap-6">
           <Image src="/logo.jpeg" alt="Nail Sosuka" width={280} height={100} className="w-52 md:w-72 h-auto object-contain" priority />
 
+          {/* Atendimento a domicílio badge — destaque principal */}
+          <div
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm"
+            style={{
+              background: 'linear-gradient(135deg, rgba(212,120,156,0.2), rgba(200,136,58,0.15))',
+              border: '1px solid rgba(212,120,156,0.5)',
+              color: '#F0ECF0',
+              boxShadow: '0 0 20px rgba(212,120,156,0.2)',
+            }}
+          >
+            <MapPin size={15} style={{ color: '#D4789C' }} />
+            Atendimento 100% a Domicílio — Vamos até você!
+          </div>
+
           <div className="space-y-3">
             <h1 className="text-3xl md:text-5xl font-bold leading-tight">
               <span className="gradient-text">Arte nas Unhas,</span>
               <br />
-              <span style={{ color: '#F0ECF0' }}>Elegância em Cada Detalhe</span>
+              <span style={{ color: '#F0ECF0' }}>no Conforto da Sua Casa</span>
             </h1>
             <p className="text-base md:text-lg max-w-md mx-auto" style={{ color: '#9A8A96' }}>
-              Manicure profissional e alongamento de unhas com qualidade premium. Agende online em segundos.
+              Manicure profissional e alongamento de unhas com qualidade premium — sem sair de casa. Agende online em segundos.
             </p>
           </div>
 
@@ -78,6 +94,83 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Destaque Atendimento a Domicílio */}
+      <section className="px-4 py-14" style={{ background: 'linear-gradient(135deg, #12101C, #1A1030)' }}>
+        <div className="max-w-4xl mx-auto">
+          <div
+            className="rounded-3xl p-6 md:p-10 flex flex-col md:flex-row items-center gap-8"
+            style={{ background: 'rgba(212,120,156,0.06)', border: '1px solid rgba(212,120,156,0.25)' }}
+          >
+            <div className="text-6xl md:text-7xl shrink-0">🏠</div>
+            <div className="text-center md:text-left">
+              <p className="text-xs uppercase tracking-widest mb-2" style={{ color: '#D4789C' }}>Nosso diferencial</p>
+              <h2 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: '#F0ECF0' }}>
+                A manicure vai até você
+              </h2>
+              <p className="leading-relaxed mb-4" style={{ color: '#9A8A96' }}>
+                Sem deslocamento, sem fila, sem estresse. A Nail Sosuka atende <strong style={{ color: '#F0ECF0' }}>exclusivamente a domicílio</strong> — você fica no sofá enquanto suas unhas ficam perfeitas.
+              </p>
+              <div className="flex flex-wrap gap-3 justify-center md:justify-start">
+                {['Sem fila de espera', 'No seu horário', 'Na sua casa'].map(t => (
+                  <span key={t} className="text-xs px-3 py-1.5 rounded-full font-medium" style={{ background: 'rgba(212,120,156,0.12)', color: '#D4789C', border: '1px solid rgba(212,120,156,0.25)' }}>
+                    ✓ {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Taxa de deslocamento info */}
+      <section className="px-4 py-10" style={{ background: '#0A0A0A' }}>
+        <div className="max-w-4xl mx-auto">
+          <div
+            className="rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4"
+            style={{ background: '#12101C', border: '1px solid rgba(200,136,58,0.3)' }}
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(200,136,58,0.15)', color: '#C8883A' }}>
+              <Car size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-sm mb-0.5" style={{ color: '#F0ECF0' }}>Taxa de deslocamento</p>
+              <p className="text-sm" style={{ color: '#9A8A96' }}>
+                Até <strong style={{ color: '#F0ECF0' }}>1 km</strong> do ponto de partida é <strong style={{ color: '#4ade80' }}>grátis</strong>. A partir daí, <strong style={{ color: '#F0ECF0' }}>R$ 5,00 por km</strong> adicional — calculado automaticamente ao inserir seu CEP no agendamento.
+              </p>
+            </div>
+            <Link
+              href="/agendar"
+              className="text-xs px-4 py-2 rounded-full font-semibold shrink-0 transition-all hover:scale-105"
+              style={{ background: 'rgba(200,136,58,0.15)', color: '#C8883A', border: '1px solid rgba(200,136,58,0.3)' }}
+            >
+              Calcular frete
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Política de sinal */}
+      <section className="px-4 pb-10" style={{ background: '#0A0A0A' }}>
+        <div className="max-w-4xl mx-auto">
+          <div
+            className="rounded-2xl p-5 flex flex-col sm:flex-row items-start gap-4"
+            style={{ background: '#12101C', border: '1px solid rgba(212,120,156,0.2)' }}
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(212,120,156,0.12)', color: '#D4789C' }}>
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm mb-1" style={{ color: '#F0ECF0' }}>Política de Sinal ({SIGNAL_PERCENT}%)</p>
+              <p className="text-sm leading-relaxed" style={{ color: '#9A8A96' }}>
+                Para confirmar o agendamento é cobrado um sinal de <strong style={{ color: '#D4789C' }}>{SIGNAL_PERCENT}% do valor do serviço</strong>, descontado do total no dia do atendimento.
+                O sinal <strong style={{ color: '#f87171' }}>não é reembolsável</strong>.
+                Em caso de cancelamento com <strong style={{ color: '#F0ECF0' }}>mais de {CANCELLATION_HOURS}h de antecedência</strong>, {CANCELLATION_REFUND_PERCENT}% do sinal é devolvido.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Diferenciais */}
       <section className="px-4 py-16" style={{ background: '#12101C' }}>
         <div className="max-w-5xl mx-auto">
@@ -85,7 +178,7 @@ export default function HomePage() {
             <p className="text-xs uppercase tracking-widest mb-2" style={{ color: '#D4789C' }}>Por que escolher a Nail Sosuka?</p>
             <h2 className="text-2xl md:text-3xl font-bold" style={{ color: '#F0ECF0' }}>Experiência que faz a diferença</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {DIFERENCIAIS.map((d) => (
               <div key={d.title} className="rounded-2xl p-5 flex flex-col gap-3 text-center transition-all hover:-translate-y-1" style={{ background: '#1C1828', border: '1px solid rgba(212,120,156,0.12)' }}>
                 <span className="text-4xl">{d.icon}</span>
@@ -156,7 +249,7 @@ export default function HomePage() {
               <span className="gradient-text">Pronta para arrasar?</span>
             </h2>
             <p className="mb-8 text-base" style={{ color: '#9A8A96' }}>
-              Agende agora mesmo e garanta seu horário. Em poucos cliques suas unhas dos sonhos ficam marcadas.
+              Agende agora mesmo e receba a manicure no conforto da sua casa.
             </p>
             <Link
               href="/agendar"
