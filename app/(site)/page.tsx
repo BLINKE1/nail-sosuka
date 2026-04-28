@@ -12,7 +12,7 @@ import { SIGNAL_PERCENT, CANCELLATION_HOURS, CANCELLATION_REFUND_PERCENT } from 
 const STEPS = [
   { icon: <Sparkles size={22} />, title: 'Escolha o Serviço', desc: 'Navegue pelos nossos serviços e escolha o que mais combina com você.' },
   { icon: <CalendarCheck size={22} />, title: 'Selecione Data e Horário', desc: 'Veja os horários disponíveis e escolha o mais conveniente.' },
-  { icon: <Star size={22} />, title: 'Confirme e Apareça', desc: 'Confirmamos pelo WhatsApp e vamos até você!' },
+  { icon: <Star size={22} />, title: 'Confirme e Pronto', desc: 'Confirmamos pelo WhatsApp e vamos até você!' },
 ];
 
 const DIFERENCIAIS = [
