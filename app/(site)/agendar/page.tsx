@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Loader2, MapPin, Car, Info, Check, Tag } from 'lucide-react';
 import {
   getActiveServices, getActiveCombos, getAvailableSlots, saveAppointment,
-  generateId, formatCurrency, formatDate, notifyOwnerWhatsApp,
+  generateId, formatCurrency, formatDate, notifyOwnerWhatsApp, getTransportPricePerBand,
 } from '@/lib/store';
 import {
   calcTransportFromCep, calcSignal,
@@ -34,6 +34,7 @@ function BookingForm() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [services, setServices] = useState<Service[]>([]);
   const [combos, setCombos] = useState<Combo[]>([]);
+  const [pricePerBand, setPricePerBand] = useState(3);
 
   // Selection state
   const [mode, setMode] = useState<SelectionMode>('services');
@@ -64,6 +65,7 @@ function BookingForm() {
   useEffect(() => {
     setServices(getActiveServices());
     setCombos(getActiveCombos());
+    setPricePerBand(getTransportPricePerBand());
   }, []);
 
   useEffect(() => {
@@ -438,7 +440,7 @@ function BookingForm() {
                 <h3 className="font-semibold text-sm" style={{ color: '#F0ECF0' }}>Taxa de Deslocamento</h3>
               </div>
               <p className="text-xs" style={{ color: '#9A8A96' }}>
-                Até 500 m é <strong style={{ color: '#4ade80' }}>grátis</strong>. Após isso, <strong style={{ color: '#F0ECF0' }}>R$ 3,00 a cada 500 m</strong> (faixa cheia).
+                Até 500 m é <strong style={{ color: '#4ade80' }}>grátis</strong>. Após isso, <strong style={{ color: '#F0ECF0' }}>{formatCurrency(pricePerBand)} a cada 500 m</strong> (faixa cheia).
               </p>
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: '#9A8A96' }}>Seu CEP *</label>

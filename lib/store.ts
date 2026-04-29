@@ -63,6 +63,7 @@ function getDefaultData(): StoreData {
     originLat: -23.593187,
     originLon: -48.063192,
     originAddress: 'Rua Kalil Yared, 204, Jardim Alvorada, Itapetininga/SP',
+    transportPricePerBand: 3,
   };
 }
 
@@ -87,6 +88,7 @@ export function getData(): StoreData {
       originLat: parsed.originLat ?? defaults.originLat,
       originLon: parsed.originLon ?? defaults.originLon,
       originAddress: parsed.originAddress ?? defaults.originAddress,
+      transportPricePerBand: parsed.transportPricePerBand ?? defaults.transportPricePerBand,
     };
 
     // Migração: se versão antiga, força as coordenadas corretas do código
@@ -175,6 +177,12 @@ export function getOrigin(): OriginData {
 }
 export function saveOrigin(o: OriginData): void {
   saveData({ ...getData(), originCep: o.cep, originLat: o.lat, originLon: o.lon, originAddress: o.address });
+}
+
+// ── Transport pricing ─────────────────────────────────────
+export function getTransportPricePerBand(): number { return getData().transportPricePerBand; }
+export function saveTransportPricePerBand(price: number): void {
+  saveData({ ...getData(), transportPricePerBand: price });
 }
 
 // ── Auth ──────────────────────────────────────────────────

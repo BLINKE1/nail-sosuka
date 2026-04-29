@@ -57,4 +57,5 @@ export interface StoreData {
   originLat: number;
   originLon: number;
   originAddress: string;
+  transportPricePerBand: number;
 }

@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapPin, Save, Loader2, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { MapPin, Save, Loader2, CheckCircle, AlertCircle, ExternalLink, Car } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { getOrigin, saveOrigin, OriginData } from '@/lib/store';
+import { getOrigin, saveOrigin, OriginData, getTransportPricePerBand, saveTransportPricePerBand } from '@/lib/store';
 import { lookupCep } from '@/lib/transport';
 
 function maskCep(v: string) {
@@ -35,6 +35,11 @@ export default function ConfiguracoesPage() {
   const [coordsError, setCoordsError] = useState('');
 
   const [saved, setSaved] = useState(false);
+  const [priceSaved, setPriceSaved] = useState(false);
+
+  // Taxa de deslocamento
+  const [pricePerBand, setPricePerBand] = useState('3');
+  const [priceError, setPriceError] = useState('');
 
   useEffect(() => {
     const o = getOrigin();
@@ -42,6 +47,7 @@ export default function ConfiguracoesPage() {
     setCep(o.cep.replace(/^(\d{5})(\d{3})$/, '$1-$2'));
     setAddressLabel(o.address);
     setCoordsInput(`${o.lat}, ${o.lon}`);
+    setPricePerBand(String(getTransportPricePerBand()));
   }, []);
 
   async function handleCepChange(value: string) {
@@ -88,6 +94,15 @@ export default function ConfiguracoesPage() {
     setOrigin(newOrigin);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
+  }
+
+  function handleSavePrice() {
+    const val = parseFloat(pricePerBand.replace(',', '.'));
+    if (isNaN(val) || val <= 0) { setPriceError('Informe um valor válido maior que zero.'); return; }
+    saveTransportPricePerBand(val);
+    setPriceError('');
+    setPriceSaved(true);
+    setTimeout(() => setPriceSaved(false), 3000);
   }
 
   const previewCoords = parseCoords(coordsInput);
@@ -199,6 +214,50 @@ export default function ConfiguracoesPage() {
           >
             <Save size={15} /> Salvar endereço
           </button>
+        </div>
+        {/* Taxa de deslocamento */}
+        <div className="rounded-2xl p-6 space-y-4" style={{ background: '#12101C', border: '1px solid rgba(200,136,58,0.3)' }}>
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(200,136,58,0.15)', color: '#C8883A' }}>
+              <Car size={18} />
+            </div>
+            <div>
+              <h2 className="font-semibold text-sm" style={{ color: '#F0ECF0' }}>Taxa de Deslocamento</h2>
+              <p className="text-xs" style={{ color: '#9A8A96' }}>Valor cobrado a cada 500 m acima dos primeiros 500 m grátis</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1.5" style={{ color: '#9A8A96' }}>Valor por faixa de 500 m (R$)</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min="0"
+                step="0.50"
+                value={pricePerBand}
+                onChange={e => { setPricePerBand(e.target.value); setPriceError(''); setPriceSaved(false); }}
+                placeholder="3.00"
+                className="flex-1 px-3 py-3 rounded-xl text-sm border"
+                style={{ background: '#1C1828', color: '#F0ECF0', borderColor: priceError ? 'rgba(248,113,113,0.5)' : 'rgba(200,136,58,0.3)' }}
+              />
+              <button
+                onClick={handleSavePrice}
+                className="px-5 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all hover:scale-[1.02]"
+                style={{ background: 'linear-gradient(135deg, #C8883A, #A06828)', color: '#F0ECF0' }}
+              >
+                <Save size={15} /> Salvar
+              </button>
+            </div>
+            {priceError && <p className="text-xs mt-1" style={{ color: '#f87171' }}>{priceError}</p>}
+            {priceSaved && (
+              <div className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl mt-2" style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.3)' }}>
+                <CheckCircle size={14} /> Taxa atualizada!
+              </div>
+            )}
+            <p className="text-xs mt-2" style={{ color: '#9A8A96' }}>
+              Ex: com R$ {pricePerBand || '3'} — 2 km de distância = 3 faixas × R$ {pricePerBand || '3'} = R$ {(3 * parseFloat(String(pricePerBand).replace(',', '.')) || 9).toFixed(2).replace('.', ',')}
+            </p>
+          </div>
         </div>
       </div>
     </AdminLayout>
