@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Shield, Sparkles, CalendarCheck, Star, MapPin, Car, AlertCircle } from 'lucide-react';
+import { ArrowRight, Shield, Sparkles, CalendarCheck, Star, MapPin } from 'lucide-react';
 import ServiceCard from '@/components/ServiceCard';
 import { getActiveServices } from '@/lib/store';
 import { Service } from '@/lib/types';
-import { SIGNAL_PERCENT, CANCELLATION_HOURS, CANCELLATION_REFUND_PERCENT } from '@/lib/transport';
 
 const STEPS = [
   { icon: <Sparkles size={22} />, title: 'Escolha o Serviço', desc: 'Navegue pelos nossos serviços e escolha o que mais combina com você.' },
@@ -122,47 +121,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Taxa de deslocamento info */}
-      <section className="px-4 py-10" style={{ background: '#0A0A0A' }}>
-        <div className="max-w-4xl mx-auto">
-          <div
-            className="rounded-2xl p-5 flex items-start gap-4"
-            style={{ background: '#12101C', border: '1px solid rgba(200,136,58,0.3)' }}
-          >
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(200,136,58,0.15)', color: '#C8883A' }}>
-              <Car size={20} />
-            </div>
-            <div>
-              <p className="font-semibold text-sm mb-0.5" style={{ color: '#F0ECF0' }}>Taxa de deslocamento</p>
-              <p className="text-sm" style={{ color: '#9A8A96' }}>
-                Até <strong style={{ color: '#F0ECF0' }}>500 m</strong> do ponto de partida é <strong style={{ color: '#4ade80' }}>grátis</strong>. A partir daí, <strong style={{ color: '#F0ECF0' }}>R$ 2,50 a cada 500 m</strong> adicionais (cobrado por faixa cheia).
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Política de sinal */}
-      <section className="px-4 pb-10" style={{ background: '#0A0A0A' }}>
-        <div className="max-w-4xl mx-auto">
-          <div
-            className="rounded-2xl p-5 flex flex-col sm:flex-row items-start gap-4"
-            style={{ background: '#12101C', border: '1px solid rgba(212,120,156,0.2)' }}
-          >
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(212,120,156,0.12)', color: '#D4789C' }}>
-              <AlertCircle size={20} />
-            </div>
-            <div>
-              <p className="font-semibold text-sm mb-1" style={{ color: '#F0ECF0' }}>Política de Sinal ({SIGNAL_PERCENT}%)</p>
-              <p className="text-sm leading-relaxed" style={{ color: '#9A8A96' }}>
-                Para confirmar o agendamento é cobrado um sinal de <strong style={{ color: '#D4789C' }}>{SIGNAL_PERCENT}% do valor do serviço</strong>, descontado do total no dia do atendimento.
-                O sinal <strong style={{ color: '#f87171' }}>não é reembolsável</strong>.
-                Em caso de cancelamento com <strong style={{ color: '#F0ECF0' }}>mais de {CANCELLATION_HOURS}h de antecedência</strong>, {CANCELLATION_REFUND_PERCENT}% do sinal é devolvido.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Diferenciais */}
       <section className="px-4 py-16" style={{ background: '#12101C' }}>

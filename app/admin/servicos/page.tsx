@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, Save, X, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Save, X, ToggleLeft, ToggleRight, GripVertical } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { getServices, saveServices, getCombos, saveCombos, generateId, formatCurrency } from '@/lib/store';
 import { Service, Combo } from '@/lib/types';
@@ -19,7 +19,7 @@ const CATEGORY_OPTIONS = [
   { value: 'outros', label: 'Outros' },
 ] as const;
 
-const EMOJI_OPTIONS = ['💅', '✨', '🤍', '🎨', '💎', '🔮', '🛠️', '🌟', '🌸', '👑', '🦋', '🌈', '🎀', '💍', '🌺', '⭐'];
+const EMOJI_OPTIONS = ['💅', '🦶', '✨', '🤍', '🎨', '💎', '🔮', '🛠️', '🌟', '🌸', '👑', '🦋', '🌈', '🎀', '💍', '🌺', '⭐'];
 const COMBO_EMOJI_OPTIONS = ['💅🎨', '✨🎨', '💎✨', '🌟💅', '🎀💅', '👑✨', '🌸💎', '🦋🌟'];
 
 type CategoryFilter = 'all' | Service['category'];
@@ -62,6 +62,8 @@ function ServicosTab() {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<Omit<Service, 'id'>>(EMPTY_SERVICE);
   const [saved, setSaved] = useState(false);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   useEffect(() => { setServices(getServices()); }, []);
 
@@ -91,6 +93,18 @@ function ServicosTab() {
     if (!confirm('Excluir este serviço?')) return;
     const updated = services.filter(s => s.id !== id);
     setServices(updated); saveServices(updated);
+  }
+
+  function handleDrop(targetId: string) {
+    if (!dragId || dragId === targetId) { setDragId(null); setDragOverId(null); return; }
+    const from = services.findIndex(s => s.id === dragId);
+    const to = services.findIndex(s => s.id === targetId);
+    if (from < 0 || to < 0) { setDragId(null); setDragOverId(null); return; }
+    const updated = [...services];
+    const [item] = updated.splice(from, 1);
+    updated.splice(to, 0, item);
+    setServices(updated); saveServices(updated);
+    setDragId(null); setDragOverId(null);
   }
 
   const filtered = filter === 'all' ? services : services.filter(s => s.category === filter);
@@ -197,10 +211,31 @@ function ServicosTab() {
         ))}
       </div>
 
-      <div className="space-y-3">
+      {filter !== 'all' && (
+        <p className="text-xs" style={{ color: '#9A8A96' }}>Reordenação disponível somente na visualização "Todos".</p>
+      )}
+
+      <div className="space-y-1">
         {filtered.map(s => (
-          <div key={s.id} className="flex items-center gap-4 rounded-2xl p-4 transition-all"
-            style={{ background: '#12101C', border: `1px solid ${s.active ? 'rgba(212,120,156,0.15)' : 'rgba(212,120,156,0.06)'}`, opacity: s.active ? 1 : 0.6 }}>
+          <div key={s.id}
+            draggable={filter === 'all'}
+            onDragStart={() => setDragId(s.id)}
+            onDragOver={e => { e.preventDefault(); setDragOverId(s.id); }}
+            onDragLeave={() => setDragOverId(null)}
+            onDrop={() => handleDrop(s.id)}
+            onDragEnd={() => { setDragId(null); setDragOverId(null); }}
+            className="flex items-center gap-3 rounded-2xl p-4 transition-all"
+            style={{
+              background: dragOverId === s.id ? 'rgba(212,120,156,0.12)' : '#12101C',
+              border: dragOverId === s.id
+                ? '2px dashed rgba(212,120,156,0.6)'
+                : `1px solid ${s.active ? 'rgba(212,120,156,0.15)' : 'rgba(212,120,156,0.06)'}`,
+              opacity: dragId === s.id ? 0.4 : s.active ? 1 : 0.6,
+              cursor: filter === 'all' ? 'grab' : 'default',
+            }}>
+            {filter === 'all' && (
+              <GripVertical size={16} className="shrink-0" style={{ color: '#9A8A96' }} />
+            )}
             <span className="text-2xl shrink-0">{s.emoji}</span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
