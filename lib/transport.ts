@@ -33,6 +33,27 @@ async function fetchJson(url: string, timeoutMs = 10000): Promise<unknown> {
   }
 }
 
+// Geocodifica cidade pelo nome usando Open-Meteo (gratuito, sem rate limit, CORS ok)
+async function geocodeCity(city: string, state: string): Promise<{ lat: number; lon: number } | null> {
+  try {
+    const data = await fetchJson(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=5&language=pt&format=json`
+    ) as { results?: Array<{ latitude: number; longitude: number; country_code: string; admin1?: string }> };
+
+    if (!data.results?.length) return null;
+
+    // Prefere resultado no Brasil e no estado correto
+    const match =
+      data.results.find(r => r.country_code === 'BR' && r.admin1?.toLowerCase().includes(state.toLowerCase())) ??
+      data.results.find(r => r.country_code === 'BR') ??
+      data.results[0];
+
+    return { lat: match.latitude, lon: match.longitude };
+  } catch {
+    return null;
+  }
+}
+
 export interface CepLookupResult {
   lat: number;
   lon: number;
@@ -45,40 +66,39 @@ export async function lookupCep(cep: string): Promise<CepLookupResult | null> {
   const clean = cep.replace(/\D/g, '');
   if (clean.length !== 8) return null;
 
-  // 1. BrasilAPI — retorna endereço + coordenadas direto do CEP
+  // ── 1. BrasilAPI v2 ──────────────────────────────────────
   try {
     const br = await fetchJson(`https://brasilapi.com.br/api/cep/v2/${clean}`) as {
       city?: string;
       state?: string;
       neighborhood?: string;
       street?: string;
-      coordinates?: { latitude?: number; longitude?: number };
+      location?: {
+        type?: string;
+        coordinates?: { latitude?: number; longitude?: number };
+      };
     };
 
     if (br?.city) {
       const address = [br.street, br.neighborhood, br.city].filter(Boolean).join(', ');
       const city = `${br.city}/${br.state}`;
 
-      if (br.coordinates?.latitude && br.coordinates?.longitude) {
-        return { lat: br.coordinates.latitude, lon: br.coordinates.longitude, address, city, cep: clean };
+      // BrasilAPI retorna coordenadas em location.coordinates
+      const lat = br.location?.coordinates?.latitude;
+      const lon = br.location?.coordinates?.longitude;
+      if (lat && lon) {
+        return { lat, lon, address, city, cep: clean };
       }
 
-      // BrasilAPI achou o endereço mas sem coordenadas — tenta Nominatim só pela cidade
-      try {
-        const q = `${br.city}, ${br.state}, Brasil`;
-        const nom = await fetchJson(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`
-        ) as Array<{ lat: string; lon: string }>;
-        if (Array.isArray(nom) && nom.length) {
-          return { lat: parseFloat(nom[0].lat), lon: parseFloat(nom[0].lon), address, city, cep: clean };
-        }
-      } catch { /* ignora */ }
+      // Sem coordenadas — geocodifica pela cidade via Open-Meteo
+      const coords = await geocodeCity(br.city, br.state ?? '');
+      if (coords) return { ...coords, address, city, cep: clean };
 
       return null;
     }
   } catch { /* cai no fallback */ }
 
-  // 2. Fallback: ViaCEP + Nominatim
+  // ── 2. Fallback: ViaCEP + Open-Meteo ────────────────────
   try {
     const via = await fetchJson(`https://viacep.com.br/ws/${clean}/json/`) as Record<string, string>;
     if (!via || via.erro) return null;
@@ -86,22 +106,8 @@ export async function lookupCep(cep: string): Promise<CepLookupResult | null> {
     const address = [via.logradouro, via.bairro, via.localidade].filter(Boolean).join(', ');
     const city = `${via.localidade}/${via.uf}`;
 
-    // Tenta primeiro endereço completo, depois só cidade
-    const queries = [
-      [via.logradouro, via.bairro, via.localidade, via.uf, 'Brasil'].filter(Boolean).join(', '),
-      `${via.localidade}, ${via.uf}, Brasil`,
-    ];
-
-    for (const q of queries) {
-      try {
-        const nom = await fetchJson(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`
-        ) as Array<{ lat: string; lon: string }>;
-        if (Array.isArray(nom) && nom.length) {
-          return { lat: parseFloat(nom[0].lat), lon: parseFloat(nom[0].lon), address, city, cep: clean };
-        }
-      } catch { /* tenta próximo */ }
-    }
+    const coords = await geocodeCity(via.localidade, via.uf ?? '');
+    if (coords) return { ...coords, address, city, cep: clean };
   } catch { /* ignora */ }
 
   return null;
