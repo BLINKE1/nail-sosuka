@@ -58,9 +58,9 @@ function getDefaultData(): StoreData {
     adminPassword: 'sosuka2024',
     whatsapp: '5515997789464',
     originCep: '18208340',
-    originLat: -23.5886,
-    originLon: -48.0483,
-    originAddress: 'Rua Kalil Yared, Jardim Alvorada, Itapetininga/SP',
+    originLat: -23.593187,
+    originLon: -48.063192,
+    originAddress: 'Rua Kalil Yared, 204, Jardim Alvorada, Itapetininga/SP',
   };
 }
 
@@ -80,8 +80,9 @@ export function getData(): StoreData {
       adminPassword: parsed.adminPassword ?? defaults.adminPassword,
       whatsapp: parsed.whatsapp ?? defaults.whatsapp,
       originCep: parsed.originCep ?? defaults.originCep,
-      originLat: parsed.originLat ?? defaults.originLat,
-      originLon: parsed.originLon ?? defaults.originLon,
+      // Migração: substitui coordenadas antigas imprecisas (Open-Meteo) pelas corretas
+      originLat: (parsed.originLat === -23.5886 || parsed.originLat === undefined) ? defaults.originLat : parsed.originLat,
+      originLon: (parsed.originLon === -48.0483 || parsed.originLon === undefined) ? defaults.originLon : parsed.originLon,
       originAddress: parsed.originAddress ?? defaults.originAddress,
     };
   } catch {
