@@ -437,7 +437,6 @@ function BookingForm() {
                 <Car size={16} style={{ color: '#C8883A' }} />
                 <h3 className="font-semibold text-sm" style={{ color: '#F0ECF0' }}>Taxa de Deslocamento</h3>
               </div>
-              <p className="text-xs" style={{ color: '#9A8A96' }}>Até 500 m é <strong style={{ color: '#4ade80' }}>grátis</strong>. Após isso, <strong style={{ color: '#F0ECF0' }}>R$ 2,00 a cada 100 m</strong> (faixa cheia).</p>
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: '#9A8A96' }}>Seu CEP *</label>
                 <div className="relative">
@@ -453,7 +452,6 @@ function BookingForm() {
               {transport && (
                 <div className="rounded-xl p-3 space-y-1" style={{ background: '#1C1828', border: '1px solid rgba(200,136,58,0.2)' }}>
                   <p className="text-xs font-medium" style={{ color: '#F0ECF0' }}>📍 {transport.address}</p>
-                  <p className="text-xs" style={{ color: '#9A8A96' }}>Distância: {transport.distanceKm} km</p>
                   <p className="font-bold text-sm" style={{ color: transport.free ? '#4ade80' : '#C8883A' }}>
                     {transport.free ? '✓ Deslocamento Grátis!' : `Taxa de deslocamento: ${formatCurrency(transportCost)}`}
                   </p>

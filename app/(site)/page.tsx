@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Shield, Sparkles, CalendarCheck, Star, MapPin } from 'lucide-react';
+import { ArrowRight, Shield, Sparkles, CalendarCheck, Star, MapPin, AlertCircle } from 'lucide-react';
 import ServiceCard from '@/components/ServiceCard';
 import { getActiveServices } from '@/lib/store';
 import { Service } from '@/lib/types';
+import { SIGNAL_PERCENT, CANCELLATION_HOURS, CANCELLATION_REFUND_PERCENT } from '@/lib/transport';
 
 const STEPS = [
   { icon: <Sparkles size={22} />, title: 'Escolha o Serviço', desc: 'Navegue pelos nossos serviços e escolha o que mais combina com você.' },
@@ -122,6 +123,25 @@ export default function HomePage() {
       </section>
 
 
+      {/* Política de Sinal */}
+      <section className="px-4 pb-10" style={{ background: 'linear-gradient(135deg, #12101C, #1A1030)' }}>
+        <div className="max-w-4xl mx-auto">
+          <div className="rounded-2xl p-5 flex flex-col sm:flex-row items-start gap-4" style={{ background: '#12101C', border: '1px solid rgba(212,120,156,0.2)' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(212,120,156,0.12)', color: '#D4789C' }}>
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm mb-1" style={{ color: '#F0ECF0' }}>Política de Sinal ({SIGNAL_PERCENT}%)</p>
+              <p className="text-sm leading-relaxed" style={{ color: '#9A8A96' }}>
+                Para confirmar o agendamento é cobrado um sinal de <strong style={{ color: '#D4789C' }}>{SIGNAL_PERCENT}% do valor do serviço</strong>, descontado do total no dia do atendimento.
+                O sinal <strong style={{ color: '#f87171' }}>não é reembolsável</strong>.
+                Em caso de cancelamento com <strong style={{ color: '#F0ECF0' }}>mais de {CANCELLATION_HOURS}h de antecedência</strong>, {CANCELLATION_REFUND_PERCENT}% do sinal é devolvido.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Diferenciais */}
       <section className="px-4 py-16" style={{ background: '#12101C' }}>
         <div className="max-w-5xl mx-auto">
@@ -188,6 +208,26 @@ export default function HomePage() {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Política de Cancelamento */}
+      <section className="px-4 py-10">
+        <div className="max-w-3xl mx-auto">
+          <div className="rounded-2xl p-5 flex flex-col sm:flex-row items-start gap-4" style={{ background: '#1C1828', border: '1px solid rgba(248,113,113,0.25)' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(248,113,113,0.1)', color: '#f87171' }}>
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm mb-2" style={{ color: '#f87171' }}>Política de Cancelamento</p>
+              <ul className="text-sm space-y-1.5" style={{ color: '#9A8A96' }}>
+                <li>⚠️ O sinal de <strong style={{ color: '#F0ECF0' }}>{SIGNAL_PERCENT}%</strong> é cobrado para confirmar e <strong style={{ color: '#f87171' }}>não é reembolsável</strong>.</li>
+                <li>🔄 Cancelamentos com mais de <strong style={{ color: '#F0ECF0' }}>{CANCELLATION_HOURS}h</strong> de antecedência: <strong style={{ color: '#F0ECF0' }}>{CANCELLATION_REFUND_PERCENT}% do sinal devolvido</strong>.</li>
+                <li>❌ Cancelamentos com menos de {CANCELLATION_HOURS}h: sinal perdido integralmente.</li>
+                <li>✅ O sinal é <strong style={{ color: '#F0ECF0' }}>descontado do total</strong> no dia do atendimento.</li>
+              </ul>
+            </div>
           </div>
         </div>
       </section>
