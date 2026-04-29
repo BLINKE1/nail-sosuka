@@ -3,8 +3,8 @@
 import { getOrigin } from './store';
 
 const FREE_RADIUS_KM = 0.5;   // 500 m grátis
-const BAND_KM = 0.1;           // faixa de 100 m
-const PRICE_PER_BAND = 2.0;    // R$ 2,00 por faixa cheia
+const BAND_KM = 0.5;           // faixa de 500 m
+const PRICE_PER_BAND = 3.0;    // R$ 3,00 por faixa cheia
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
