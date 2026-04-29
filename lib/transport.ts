@@ -138,12 +138,32 @@ export interface TransportResult {
   free: boolean;
 }
 
+async function osrmDistanceKm(
+  lat1: number, lon1: number,
+  lat2: number, lon2: number,
+): Promise<number | null> {
+  try {
+    const data = await fetchJson(
+      `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`,
+      8000,
+    ) as { code?: string; routes?: Array<{ distance: number }> };
+    if (data.code === 'Ok' && data.routes?.length) {
+      return data.routes[0].distance / 1000; // metros → km
+    }
+  } catch { /* ignora */ }
+  return null;
+}
+
 export async function calcTransportFromCep(clientCep: string): Promise<TransportResult | null> {
   const destination = await lookupCep(clientCep);
   if (!destination) return null;
 
   const origin = getOrigin();
-  const distanceKm = haversineKm(origin.lat, origin.lon, destination.lat, destination.lon);
+
+  const distanceKm =
+    (await osrmDistanceKm(origin.lat, origin.lon, destination.lat, destination.lon)) ??
+    haversineKm(origin.lat, origin.lon, destination.lat, destination.lon);
+
   const cost = calcTransportCost(distanceKm);
 
   return {
