@@ -2,8 +2,9 @@
 
 import { getOrigin } from './store';
 
-const PRICE_PER_KM = 5;
-const FREE_RADIUS_KM = 1;
+const FREE_RADIUS_KM = 0.5;   // 500 m grátis
+const BAND_KM = 0.5;           // faixa de 500 m
+const PRICE_PER_BAND = 2.5;    // R$ 2,50 por faixa cheia
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -18,7 +19,8 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 
 export function calcTransportCost(distanceKm: number): number {
   if (distanceKm <= FREE_RADIUS_KM) return 0;
-  return Math.round((distanceKm - FREE_RADIUS_KM) * PRICE_PER_KM * 100) / 100;
+  const bands = Math.ceil((distanceKm - FREE_RADIUS_KM) / BAND_KM);
+  return bands * PRICE_PER_BAND;
 }
 
 async function fetchJson(url: string, timeoutMs = 10000): Promise<unknown> {

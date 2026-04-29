@@ -135,7 +135,7 @@ export default function HomePage() {
             <div>
               <p className="font-semibold text-sm mb-0.5" style={{ color: '#F0ECF0' }}>Taxa de deslocamento</p>
               <p className="text-sm" style={{ color: '#9A8A96' }}>
-                Até <strong style={{ color: '#F0ECF0' }}>1 km</strong> do ponto de partida é <strong style={{ color: '#4ade80' }}>grátis</strong>. A partir daí, <strong style={{ color: '#F0ECF0' }}>R$ 5,00 por km</strong> adicional.
+                Até <strong style={{ color: '#F0ECF0' }}>500 m</strong> do ponto de partida é <strong style={{ color: '#4ade80' }}>grátis</strong>. A partir daí, <strong style={{ color: '#F0ECF0' }}>R$ 2,50 a cada 500 m</strong> adicionais (cobrado por faixa cheia).
               </p>
             </div>
           </div>
