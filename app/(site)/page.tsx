@@ -12,11 +12,11 @@ import { SIGNAL_PERCENT, CANCELLATION_HOURS, CANCELLATION_REFUND_PERCENT } from 
 const STEPS = [
   { icon: <Sparkles size={22} />, title: 'Escolha o Serviço', desc: 'Navegue pelos nossos serviços e escolha o que mais combina com você.' },
   { icon: <CalendarCheck size={22} />, title: 'Selecione Data e Horário', desc: 'Veja os horários disponíveis e escolha o mais conveniente.' },
-  { icon: <Star size={22} />, title: 'Confirme e Pronto', desc: 'Confirmamos pelo WhatsApp e vamos até você!' },
+  { icon: <Star size={22} />, title: 'Confirme e Pronto', desc: 'Confirmo pelo WhatsApp e vou até você!' },
 ];
 
 const DIFERENCIAIS = [
-  { icon: '🏠', title: 'Vai até você', desc: 'Atendimento 100% a domicílio. Você fica no conforto da sua casa enquanto cuida das suas unhas.' },
+  { icon: '🏠', title: 'Vou até você', desc: 'Atendimento 100% a domicílio. Você fica no conforto da sua casa enquanto cuido das suas unhas.' },
   { icon: '⏱️', title: 'Pontualidade', desc: 'Respeitamos o seu tempo. Agendamentos sem espera desnecessária.' },
   { icon: '🛡️', title: 'Higiene Total', desc: 'Materiais esterilizados e ambiente sempre limpo para sua segurança.' },
 ];
@@ -49,7 +49,7 @@ export default function HomePage() {
             }}
           >
             <MapPin size={15} style={{ color: '#D4789C' }} />
-            Atendimento 100% a Domicílio — Vamos até você!
+            Atendimento 100% a Domicílio — Vou até você!
           </div>
 
           <div className="space-y-3">
@@ -105,10 +105,10 @@ export default function HomePage() {
             <div className="text-center md:text-left">
               <p className="text-xs uppercase tracking-widest mb-2" style={{ color: '#D4789C' }}>Nosso diferencial</p>
               <h2 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: '#F0ECF0' }}>
-                A manicure vai até você
+                Eu vou até você
               </h2>
               <p className="leading-relaxed mb-4" style={{ color: '#9A8A96' }}>
-                Sem deslocamento, sem fila, sem estresse. A Nail Sosuka atende <strong style={{ color: '#F0ECF0' }}>exclusivamente a domicílio</strong> — você fica no sofá enquanto suas unhas ficam perfeitas.
+                Sem deslocamento, sem fila, sem estresse. Eu atendo <strong style={{ color: '#F0ECF0' }}>exclusivamente a domicílio</strong> — você fica no sofá enquanto suas unhas ficam perfeitas.
               </p>
               <div className="flex flex-wrap gap-3 justify-center md:justify-start">
                 {['Sem fila de espera', 'No seu horário', 'Na sua casa'].map(t => (
