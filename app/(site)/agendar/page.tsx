@@ -2,9 +2,9 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Loader2, MapPin, Car, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Loader2, MapPin, Car, Info, Check, Tag } from 'lucide-react';
 import {
-  getActiveServices, getAvailableSlots, saveAppointment,
+  getActiveServices, getActiveCombos, getAvailableSlots, saveAppointment,
   generateId, formatCurrency, formatDate, notifyOwnerWhatsApp,
 } from '@/lib/store';
 import {
@@ -12,7 +12,7 @@ import {
   SIGNAL_PERCENT, CANCELLATION_HOURS, CANCELLATION_REFUND_PERCENT,
   TransportResult,
 } from '@/lib/transport';
-import { Service } from '@/lib/types';
+import { Service, Combo } from '@/lib/types';
 
 const MONTH_LABELS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -20,10 +20,11 @@ const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 function isoDate(y: number, m: number, d: number) {
   return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
-
 function maskCep(v: string) {
   return v.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9);
 }
+
+type SelectionMode = 'services' | 'combo';
 
 function BookingForm() {
   const searchParams = useSearchParams();
@@ -32,7 +33,16 @@ function BookingForm() {
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [services, setServices] = useState<Service[]>([]);
-  const [selectedServiceId, setSelectedServiceId] = useState(searchParams.get('servico') ?? '');
+  const [combos, setCombos] = useState<Combo[]>([]);
+
+  // Selection state
+  const [mode, setMode] = useState<SelectionMode>('services');
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>(
+    searchParams.get('servico') ? [searchParams.get('servico')!] : []
+  );
+  const [selectedComboId, setSelectedComboId] = useState<string>('');
+
+  // Calendar
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState(searchParams.get('data') ?? '');
@@ -51,17 +61,50 @@ function BookingForm() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => { setServices(getActiveServices()); }, []);
+  useEffect(() => {
+    setServices(getActiveServices());
+    setCombos(getActiveCombos());
+  }, []);
+
   useEffect(() => {
     if (selectedDate) setAvailableSlots(getAvailableSlots(selectedDate));
   }, [selectedDate]);
 
-  const selectedService = services.find(s => s.id === selectedServiceId);
-  const signal = selectedService ? calcSignal(selectedService.price) : 0;
-  const total = (selectedService?.price ?? 0) + (transport?.cost ?? 0);
-  const remaining = total - signal;
+  // Computed totals
+  const selectedCombo = combos.find(c => c.id === selectedComboId);
+  const selectedServices = services.filter(s => selectedServiceIds.includes(s.id));
 
-  // CEP lookup
+  const totalPrice = mode === 'combo'
+    ? (selectedCombo?.price ?? 0)
+    : selectedServices.reduce((sum, s) => sum + s.price, 0);
+
+  const totalDuration = mode === 'combo'
+    ? (selectedCombo?.duration ?? 0)
+    : selectedServices.reduce((sum, s) => sum + s.duration, 0);
+
+  const selectionName = mode === 'combo'
+    ? (selectedCombo?.name ?? '')
+    : selectedServices.map(s => s.name).join(' + ');
+
+  const hasSelection = mode === 'combo' ? !!selectedComboId : selectedServiceIds.length > 0;
+
+  const originalPrice = mode === 'combo' && selectedCombo
+    ? services.filter(s => selectedCombo.serviceIds.includes(s.id))
+        .reduce((sum, s) => sum + s.price, 0)
+    : 0;
+  const hasDiscount = mode === 'combo' && originalPrice > 0 && (selectedCombo?.price ?? 0) < originalPrice;
+
+  const signal = calcSignal(totalPrice);
+  const transportCost = transport?.cost ?? 0;
+  const grandTotal = totalPrice + transportCost;
+  const remaining = grandTotal - signal;
+
+  function toggleService(id: string) {
+    setSelectedServiceIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  }
+
   async function handleCepChange(value: string) {
     const masked = maskCep(value);
     setCep(masked);
@@ -80,20 +123,15 @@ function BookingForm() {
   // Calendar helpers
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  function isPast(day: number) {
-    const d = new Date(year, month, day); const t = new Date(); t.setHours(0,0,0,0); return d < t;
-  }
-  function prevMonth() { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); }
-  function nextMonth() { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); }
-
+  function isPast(day: number) { const d = new Date(year, month, day); const t = new Date(); t.setHours(0,0,0,0); return d < t; }
+  function prevMonth() { if (month === 0) { setMonth(11); setYear(y => y-1); } else setMonth(m => m-1); }
+  function nextMonth() { if (month === 11) { setMonth(0); setYear(y => y+1); } else setMonth(m => m+1); }
   function getDayStyle(day: number) {
     const iso = isoDate(year, month, day);
-    const past = isPast(day);
     const sel = selectedDate === iso;
     const isToday = iso === isoDate(today.getFullYear(), today.getMonth(), today.getDate());
     if (sel) return { background: 'linear-gradient(135deg, #D4789C, #A0587C)', color: '#F0ECF0', cursor: 'pointer' };
-    if (past) return { color: 'rgba(240,236,240,0.2)', cursor: 'default' };
+    if (isPast(day)) return { color: 'rgba(240,236,240,0.2)', cursor: 'default' };
     if (isToday) return { background: 'rgba(212,120,156,0.2)', color: '#D4789C', cursor: 'pointer', border: '1px solid rgba(212,120,156,0.5)' };
     return { background: '#1C1828', color: '#F0ECF0', cursor: 'pointer', border: '1px solid rgba(212,120,156,0.15)' };
   }
@@ -108,16 +146,17 @@ function BookingForm() {
       clientName: form.name.trim(),
       clientPhone: form.phone.trim(),
       clientEmail: form.email.trim(),
-      serviceId: selectedServiceId,
-      serviceName: selectedService!.name,
-      servicePrice: selectedService!.price,
+      serviceId: mode === 'combo' ? `combo:${selectedComboId}` : selectedServiceIds.join(','),
+      serviceName: selectionName,
+      servicePrice: totalPrice,
+      serviceDuration: totalDuration,
       date: selectedDate,
       time: selectedTime,
       status: 'pending' as const,
       notes: [
         form.notes.trim(),
         `Endereço: ${transport.address} (CEP ${cep})`,
-        `Frete: ${transport.free ? 'Grátis' : formatCurrency(transport.cost)} (${transport.distanceKm} km)`,
+        `Frete: ${transport.free ? 'Grátis' : formatCurrency(transportCost)} (${transport.distanceKm} km)`,
       ].filter(Boolean).join(' | '),
       createdAt: new Date().toISOString(),
     };
@@ -127,7 +166,7 @@ function BookingForm() {
     setSuccess(true);
   }
 
-  const canStep2 = !!selectedServiceId;
+  const canStep2 = hasSelection;
   const canStep3 = selectedDate && selectedTime;
 
   if (success) {
@@ -138,13 +177,9 @@ function BookingForm() {
             <CheckCircle size={40} style={{ color: '#D4789C' }} />
           </div>
           <h2 className="text-2xl font-bold mb-2" style={{ color: '#F0ECF0' }}>Agendamento Confirmado!</h2>
-          <p className="mb-1" style={{ color: '#9A8A96' }}><strong style={{ color: '#D4789C' }}>{selectedService?.name}</strong></p>
+          <p className="mb-1 font-medium" style={{ color: '#D4789C' }}>{selectionName}</p>
           <p className="mb-1" style={{ color: '#9A8A96' }}>{formatDate(selectedDate)} às {selectedTime}</p>
-          {transport && (
-            <p className="mb-1 text-sm" style={{ color: '#9A8A96' }}>
-              📍 {transport.address} — Frete: {transport.free ? 'Grátis' : formatCurrency(transport.cost)}
-            </p>
-          )}
+          {transport && <p className="mb-1 text-sm" style={{ color: '#9A8A96' }}>📍 {transport.address} — Frete: {transport.free ? 'Grátis' : formatCurrency(transportCost)}</p>}
           <p className="text-sm mt-4 mb-2" style={{ color: '#9A8A96' }}>
             Entraremos em contato pelo WhatsApp para combinar o pagamento do sinal de{' '}
             <strong style={{ color: '#D4789C' }}>{formatCurrency(signal)}</strong> ({SIGNAL_PERCENT}%).
@@ -168,9 +203,9 @@ function BookingForm() {
           <h1 className="text-3xl md:text-4xl font-bold" style={{ color: '#F0ECF0' }}>Agendar Horário</h1>
         </div>
 
-        {/* Steps indicator */}
+        {/* Steps */}
         <div className="flex items-center justify-center gap-3 mb-8">
-          {[{ n: 1, label: 'Serviço' }, { n: 2, label: 'Data & Hora' }, { n: 3, label: 'Endereço & Dados' }].map(({ n, label }) => (
+          {[{ n: 1, label: 'Serviços' }, { n: 2, label: 'Data & Hora' }, { n: 3, label: 'Endereço & Dados' }].map(({ n, label }) => (
             <div key={n} className="flex items-center gap-2">
               <div className="flex flex-col items-center gap-1">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all"
@@ -184,34 +219,127 @@ function BookingForm() {
           ))}
         </div>
 
-        {/* ── STEP 1: Serviço ── */}
+        {/* ── STEP 1: Seleção ── */}
         {step === 1 && (
-          <div className="space-y-4">
-            <h2 className="font-semibold text-lg mb-4" style={{ color: '#F0ECF0' }}>Escolha o Serviço</h2>
-            <div className="grid grid-cols-1 gap-3">
-              {services.map(s => (
-                <button key={s.id} onClick={() => setSelectedServiceId(s.id)}
-                  className="text-left rounded-2xl p-4 transition-all"
-                  style={selectedServiceId === s.id
-                    ? { background: 'rgba(212,120,156,0.12)', border: '2px solid #D4789C' }
-                    : { background: '#1C1828', border: '1px solid rgba(212,120,156,0.15)' }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{s.emoji}</span>
-                      <div>
-                        <p className="font-semibold text-sm" style={{ color: '#F0ECF0' }}>{s.name}</p>
-                        <p className="text-xs mt-0.5" style={{ color: '#9A8A96' }}>{s.description}</p>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0 ml-3">
-                      <p className="font-bold" style={{ color: '#D4789C' }}>{formatCurrency(s.price)}</p>
-                      <p className="text-xs" style={{ color: '#9A8A96' }}>{s.duration} min</p>
-                    </div>
-                  </div>
-                </button>
-              ))}
+          <div className="space-y-5">
+            {/* Mode toggle */}
+            <div className="flex gap-1 p-1 rounded-xl" style={{ background: '#12101C' }}>
+              <button onClick={() => setMode('services')}
+                className="flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2"
+                style={mode === 'services' ? { background: 'linear-gradient(135deg, #D4789C, #A0587C)', color: '#F0ECF0' } : { color: '#9A8A96' }}>
+                💅 Serviços avulsos
+              </button>
+              <button onClick={() => setMode('combo')}
+                className="flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2"
+                style={mode === 'combo' ? { background: 'linear-gradient(135deg, #C8883A, #A06828)', color: '#F0ECF0' } : { color: '#9A8A96' }}>
+                <Tag size={14} /> Combos
+              </button>
             </div>
-            <div className="pt-4 flex justify-end">
+
+            {/* Serviços avulsos — multi-select */}
+            {mode === 'services' && (
+              <div className="space-y-3">
+                <p className="text-xs" style={{ color: '#9A8A96' }}>Selecione um ou mais serviços:</p>
+                {services.map(s => {
+                  const selected = selectedServiceIds.includes(s.id);
+                  return (
+                    <button key={s.id} onClick={() => toggleService(s.id)}
+                      className="w-full text-left rounded-2xl p-4 transition-all"
+                      style={selected
+                        ? { background: 'rgba(212,120,156,0.12)', border: '2px solid #D4789C' }
+                        : { background: '#1C1828', border: '1px solid rgba(212,120,156,0.15)' }}>
+                      <div className="flex items-center gap-3">
+                        {/* Checkbox */}
+                        <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-all"
+                          style={selected ? { background: '#D4789C' } : { border: '2px solid rgba(212,120,156,0.4)' }}>
+                          {selected && <Check size={12} className="text-white" />}
+                        </div>
+                        <span className="text-xl">{s.emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm" style={{ color: '#F0ECF0' }}>{s.name}</p>
+                          <p className="text-xs mt-0.5 truncate" style={{ color: '#9A8A96' }}>{s.description}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-bold" style={{ color: '#D4789C' }}>{formatCurrency(s.price)}</p>
+                          <p className="text-xs" style={{ color: '#9A8A96' }}>{s.duration} min</p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Combos */}
+            {mode === 'combo' && (
+              <div className="space-y-3">
+                <p className="text-xs" style={{ color: '#9A8A96' }}>Escolha um combo com desconto especial:</p>
+                {combos.length === 0 && (
+                  <p className="text-center py-8" style={{ color: '#9A8A96' }}>Nenhum combo disponível no momento.</p>
+                )}
+                {combos.map(c => {
+                  const selected = selectedComboId === c.id;
+                  const comboServices = services.filter(s => c.serviceIds.includes(s.id));
+                  const sumPrice = comboServices.reduce((sum, s) => sum + s.price, 0);
+                  const discount = sumPrice > c.price ? sumPrice - c.price : 0;
+                  return (
+                    <button key={c.id} onClick={() => setSelectedComboId(c.id)}
+                      className="w-full text-left rounded-2xl p-4 transition-all"
+                      style={selected
+                        ? { background: 'rgba(200,136,58,0.12)', border: '2px solid #C8883A' }
+                        : { background: '#1C1828', border: '1px solid rgba(200,136,58,0.2)' }}>
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 mt-0.5"
+                          style={selected ? { background: '#C8883A' } : { border: '2px solid rgba(200,136,58,0.4)' }}>
+                          {selected && <Check size={12} className="text-white" />}
+                        </div>
+                        <div className="text-xl shrink-0">{c.emoji}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-sm" style={{ color: '#F0ECF0' }}>{c.name}</p>
+                            {discount > 0 && (
+                              <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(74,222,128,0.12)', color: '#4ade80' }}>
+                                Economize {formatCurrency(discount)}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs mt-0.5" style={{ color: '#9A8A96' }}>{c.description}</p>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {comboServices.map((s, i) => (
+                              <span key={`${s.id}-${i}`} className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(200,136,58,0.1)', color: '#C8883A' }}>
+                                {s.emoji} {s.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          {discount > 0 && (
+                            <p className="text-xs line-through" style={{ color: '#9A8A96' }}>{formatCurrency(sumPrice)}</p>
+                          )}
+                          <p className="font-bold" style={{ color: '#C8883A' }}>{formatCurrency(c.price)}</p>
+                          <p className="text-xs" style={{ color: '#9A8A96' }}>{c.duration} min</p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Running total */}
+            {hasSelection && (
+              <div className="rounded-xl p-3 flex items-center justify-between" style={{ background: 'rgba(212,120,156,0.08)', border: '1px solid rgba(212,120,156,0.2)' }}>
+                <div>
+                  <p className="text-xs" style={{ color: '#9A8A96' }}>
+                    {mode === 'services' ? `${selectedServiceIds.length} serviço(s) selecionado(s) · ${totalDuration} min` : `${totalDuration} min`}
+                  </p>
+                  <p className="text-sm font-medium truncate max-w-xs" style={{ color: '#F0ECF0' }}>{selectionName}</p>
+                </div>
+                <p className="font-bold text-lg shrink-0" style={{ color: '#D4789C' }}>{formatCurrency(totalPrice)}</p>
+              </div>
+            )}
+
+            <div className="flex justify-end">
               <button onClick={() => setStep(2)} disabled={!canStep2}
                 className="px-8 py-3 rounded-full font-semibold transition-all hover:scale-105 disabled:opacity-40"
                 style={{ background: 'linear-gradient(135deg, #D4789C, #A0587C)', color: '#F0ECF0' }}>
@@ -228,18 +356,16 @@ function BookingForm() {
               <ChevronLeft size={16} /> Voltar
             </button>
 
-            {selectedService && (
-              <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(212,120,156,0.08)', border: '1px solid rgba(212,120,156,0.2)' }}>
-                <span className="text-xl">{selectedService.emoji}</span>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm" style={{ color: '#F0ECF0' }}>{selectedService.name}</p>
-                  <p className="text-xs" style={{ color: '#9A8A96' }}>{selectedService.duration} min</p>
-                </div>
-                <p className="font-bold" style={{ color: '#D4789C' }}>{formatCurrency(selectedService.price)}</p>
+            {/* Resumo seleção */}
+            <div className="rounded-xl p-3 flex items-center justify-between" style={{ background: 'rgba(212,120,156,0.08)', border: '1px solid rgba(212,120,156,0.2)' }}>
+              <div>
+                <p className="text-xs" style={{ color: '#9A8A96' }}>{totalDuration} min</p>
+                <p className="text-sm font-medium" style={{ color: '#F0ECF0' }}>{selectionName}</p>
               </div>
-            )}
+              <p className="font-bold" style={{ color: '#D4789C' }}>{formatCurrency(totalPrice)}</p>
+            </div>
 
-            {/* Mini calendar */}
+            {/* Calendário */}
             <div className="rounded-2xl overflow-hidden" style={{ background: '#12101C', border: '1px solid rgba(212,120,156,0.2)' }}>
               <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(212,120,156,0.15)' }}>
                 <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-white/5" style={{ color: '#D4789C' }}><ChevronLeft size={18} /></button>
@@ -264,7 +390,7 @@ function BookingForm() {
 
             {selectedDate && (
               <div>
-                <p className="font-medium mb-3 text-sm" style={{ color: '#F0ECF0' }}>Horários disponíveis — {formatDate(selectedDate)}</p>
+                <p className="font-medium mb-3 text-sm" style={{ color: '#F0ECF0' }}>Horários — {formatDate(selectedDate)}</p>
                 {availableSlots.length > 0 ? (
                   <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                     {availableSlots.map(slot => (
@@ -283,7 +409,7 @@ function BookingForm() {
               </div>
             )}
 
-            <div className="pt-2 flex justify-end">
+            <div className="flex justify-end">
               <button onClick={() => setStep(3)} disabled={!canStep3}
                 className="px-8 py-3 rounded-full font-semibold transition-all hover:scale-105 disabled:opacity-40"
                 style={{ background: 'linear-gradient(135deg, #D4789C, #A0587C)', color: '#F0ECF0' }}>
@@ -293,76 +419,67 @@ function BookingForm() {
           </div>
         )}
 
-        {/* ── STEP 3: Endereço + Dados + Política ── */}
+        {/* ── STEP 3: Endereço + Dados ── */}
         {step === 3 && (
           <div className="space-y-5">
             <button onClick={() => setStep(2)} className="flex items-center gap-1 text-sm" style={{ color: '#9A8A96' }}>
               <ChevronLeft size={16} /> Voltar
             </button>
 
-            {/* Calculador de CEP */}
+            {/* CEP */}
             <div className="rounded-2xl p-5 space-y-3" style={{ background: '#12101C', border: '1px solid rgba(200,136,58,0.3)' }}>
               <div className="flex items-center gap-2 mb-1">
                 <Car size={16} style={{ color: '#C8883A' }} />
                 <h3 className="font-semibold text-sm" style={{ color: '#F0ECF0' }}>Taxa de Deslocamento</h3>
               </div>
-              <p className="text-xs" style={{ color: '#9A8A96' }}>
-                Até 1 km é <strong style={{ color: '#4ade80' }}>grátis</strong>. Após isso, R$ 5,00 por km adicional.
-              </p>
-
+              <p className="text-xs" style={{ color: '#9A8A96' }}>Até 1 km é <strong style={{ color: '#4ade80' }}>grátis</strong>. Após isso, R$ 5,00 por km adicional.</p>
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: '#9A8A96' }}>Seu CEP *</label>
                 <div className="relative">
                   <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#9A8A96' }} />
-                  <input
-                    type="text"
-                    value={cep}
-                    onChange={e => handleCepChange(e.target.value)}
-                    placeholder="00000-000"
+                  <input type="text" value={cep} onChange={e => handleCepChange(e.target.value)}
+                    placeholder="00000-000" maxLength={9}
                     className="w-full pl-8 pr-10 py-3 rounded-xl text-sm border"
-                    style={{ background: '#1C1828', color: '#F0ECF0', borderColor: 'rgba(200,136,58,0.3)' }}
-                    maxLength={9}
-                  />
-                  {loadingCep && (
-                    <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin" style={{ color: '#C8883A' }} />
-                  )}
+                    style={{ background: '#1C1828', color: '#F0ECF0', borderColor: 'rgba(200,136,58,0.3)' }} />
+                  {loadingCep && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin" style={{ color: '#C8883A' }} />}
                 </div>
               </div>
-
-              {cepError && (
-                <p className="text-xs flex items-center gap-1.5" style={{ color: '#f87171' }}>
-                  <AlertCircle size={13} /> {cepError}
-                </p>
-              )}
-
+              {cepError && <p className="text-xs flex items-center gap-1.5" style={{ color: '#f87171' }}><AlertCircle size={13} /> {cepError}</p>}
               {transport && (
                 <div className="rounded-xl p-3 space-y-1" style={{ background: '#1C1828', border: '1px solid rgba(200,136,58,0.2)' }}>
                   <p className="text-xs font-medium" style={{ color: '#F0ECF0' }}>📍 {transport.address}</p>
                   <p className="text-xs" style={{ color: '#9A8A96' }}>Distância: {transport.distanceKm} km</p>
                   <p className="font-bold text-sm" style={{ color: transport.free ? '#4ade80' : '#C8883A' }}>
-                    {transport.free ? '✓ Deslocamento Grátis!' : `Taxa de deslocamento: ${formatCurrency(transport.cost)}`}
+                    {transport.free ? '✓ Deslocamento Grátis!' : `Taxa de deslocamento: ${formatCurrency(transportCost)}`}
                   </p>
                 </div>
               )}
             </div>
 
             {/* Resumo financeiro */}
-            {selectedService && transport && (
+            {transport && (
               <div className="rounded-2xl p-4 space-y-2" style={{ background: '#12101C', border: '1px solid rgba(212,120,156,0.2)' }}>
                 <p className="text-xs uppercase tracking-widest mb-3" style={{ color: '#D4789C' }}>Resumo do Agendamento</p>
-                <div className="flex justify-between text-sm"><span style={{ color: '#9A8A96' }}>Serviço</span><span style={{ color: '#F0ECF0' }}>{selectedService.name}</span></div>
+                <div className="flex justify-between text-sm"><span style={{ color: '#9A8A96' }}>Serviço(s)</span><span style={{ color: '#F0ECF0' }}>{selectionName}</span></div>
                 <div className="flex justify-between text-sm"><span style={{ color: '#9A8A96' }}>Data</span><span style={{ color: '#F0ECF0' }}>{formatDate(selectedDate)}</span></div>
                 <div className="flex justify-between text-sm"><span style={{ color: '#9A8A96' }}>Horário</span><span style={{ color: '#F0ECF0' }}>{selectedTime}</span></div>
-                <div className="flex justify-between text-sm"><span style={{ color: '#9A8A96' }}>Valor do serviço</span><span style={{ color: '#F0ECF0' }}>{formatCurrency(selectedService.price)}</span></div>
+                <div className="flex justify-between text-sm"><span style={{ color: '#9A8A96' }}>Duração estimada</span><span style={{ color: '#F0ECF0' }}>{totalDuration} min</span></div>
+                {hasDiscount && (
+                  <div className="flex justify-between text-sm">
+                    <span style={{ color: '#9A8A96' }}>Desconto do combo</span>
+                    <span style={{ color: '#4ade80' }}>- {formatCurrency(originalPrice - (selectedCombo?.price ?? 0))}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm"><span style={{ color: '#9A8A96' }}>Valor dos serviços</span><span style={{ color: '#F0ECF0' }}>{formatCurrency(totalPrice)}</span></div>
                 <div className="flex justify-between text-sm">
                   <span style={{ color: '#9A8A96' }}>Deslocamento</span>
-                  <span style={{ color: transport.free ? '#4ade80' : '#C8883A' }}>{transport.free ? 'Grátis' : formatCurrency(transport.cost)}</span>
+                  <span style={{ color: transport.free ? '#4ade80' : '#C8883A' }}>{transport.free ? 'Grátis' : formatCurrency(transportCost)}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold pt-2" style={{ borderTop: '1px solid rgba(212,120,156,0.1)' }}>
                   <span style={{ color: '#9A8A96' }}>Total</span>
-                  <span style={{ color: '#F0ECF0' }}>{formatCurrency(total)}</span>
+                  <span style={{ color: '#F0ECF0' }}>{formatCurrency(grandTotal)}</span>
                 </div>
-                <div className="rounded-xl p-3 mt-2 space-y-1" style={{ background: 'rgba(212,120,156,0.07)', border: '1px solid rgba(212,120,156,0.2)' }}>
+                <div className="rounded-xl p-3 mt-1 space-y-1" style={{ background: 'rgba(212,120,156,0.07)', border: '1px solid rgba(212,120,156,0.2)' }}>
                   <div className="flex justify-between text-sm font-semibold">
                     <span style={{ color: '#D4789C' }}>Sinal ({SIGNAL_PERCENT}%) — pagar agora</span>
                     <span style={{ color: '#D4789C' }}>{formatCurrency(signal)}</span>
@@ -375,21 +492,21 @@ function BookingForm() {
               </div>
             )}
 
-            {/* Política de sinal */}
+            {/* Política */}
             <div className="rounded-2xl p-4 space-y-2" style={{ background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.25)' }}>
               <div className="flex items-center gap-2 mb-1">
                 <Info size={14} style={{ color: '#f87171' }} />
                 <p className="font-semibold text-sm" style={{ color: '#f87171' }}>Política de Cancelamento</p>
               </div>
               <ul className="text-xs space-y-1.5" style={{ color: '#9A8A96' }}>
-                <li>⚠️ O sinal de <strong style={{ color: '#F0ECF0' }}>{SIGNAL_PERCENT}%</strong> é cobrado para confirmar o agendamento e <strong style={{ color: '#f87171' }}>não é reembolsável</strong>.</li>
-                <li>🔄 Cancelamentos com mais de <strong style={{ color: '#F0ECF0' }}>{CANCELLATION_HOURS} horas</strong> de antecedência: <strong style={{ color: '#F0ECF0' }}>{CANCELLATION_REFUND_PERCENT}% do sinal devolvido</strong>.</li>
+                <li>⚠️ O sinal de <strong style={{ color: '#F0ECF0' }}>{SIGNAL_PERCENT}%</strong> é cobrado para confirmar e <strong style={{ color: '#f87171' }}>não é reembolsável</strong>.</li>
+                <li>🔄 Cancelamentos com mais de <strong style={{ color: '#F0ECF0' }}>{CANCELLATION_HOURS}h</strong> de antecedência: <strong style={{ color: '#F0ECF0' }}>{CANCELLATION_REFUND_PERCENT}% do sinal devolvido</strong>.</li>
                 <li>❌ Cancelamentos com menos de {CANCELLATION_HOURS}h: sinal perdido integralmente.</li>
-                <li>✅ O sinal é <strong style={{ color: '#F0ECF0' }}>descontado do valor total</strong> no dia do atendimento.</li>
+                <li>✅ O sinal é <strong style={{ color: '#F0ECF0' }}>descontado do total</strong> no dia do atendimento.</li>
               </ul>
             </div>
 
-            {/* Dados pessoais */}
+            {/* Dados */}
             <div className="space-y-4">
               <h2 className="font-semibold" style={{ color: '#F0ECF0' }}>Seus Dados</h2>
               {[
@@ -424,9 +541,8 @@ function BookingForm() {
             <button onClick={handleSubmit} disabled={submitting || !transport}
               className="w-full py-4 rounded-full font-bold text-lg transition-all hover:scale-105 disabled:opacity-60 flex items-center justify-center gap-2"
               style={{ background: 'linear-gradient(135deg, #D4789C, #A0587C)', color: '#F0ECF0', boxShadow: '0 0 24px rgba(212,120,156,0.35)' }}>
-              {submitting ? <><Loader2 size={20} className="animate-spin" /> Confirmando...</> : `Confirmar Agendamento — Sinal ${formatCurrency(signal)}`}
+              {submitting ? <><Loader2 size={20} className="animate-spin" /> Confirmando...</> : `Confirmar — Sinal ${formatCurrency(signal)}`}
             </button>
-
             <p className="text-xs text-center" style={{ color: '#9A8A96' }}>
               Após confirmar, entraremos em contato pelo WhatsApp para combinar o pagamento do sinal.
             </p>
@@ -439,11 +555,7 @@ function BookingForm() {
 
 export default function AgendarPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 size={32} className="animate-spin" style={{ color: '#D4789C' }} />
-      </div>
-    }>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 size={32} className="animate-spin" style={{ color: '#D4789C' }} /></div>}>
       <BookingForm />
     </Suspense>
   );

@@ -1,87 +1,38 @@
 'use client';
 
-import { Service, Appointment, WorkingDay, StoreData } from './types';
+import { Service, Combo, Appointment, WorkingDay, StoreData } from './types';
 
 const DEFAULT_SERVICES: Service[] = [
+  { id: '1', name: 'Manicure Tradicional', description: 'Cutícula, lixamento e esmaltação com esmalte comum', price: 35, duration: 45, category: 'manicure', active: true, emoji: '💅' },
+  { id: '2', name: 'Manicure em Gel', description: 'Esmaltação em gel com maior duração e brilho intenso', price: 60, duration: 60, category: 'manicure', active: true, emoji: '✨' },
+  { id: '3', name: 'Manicure Francesa', description: 'Clássica e elegante, ideal para qualquer ocasião', price: 45, duration: 60, category: 'manicure', active: true, emoji: '🤍' },
+  { id: '4', name: 'Nail Art', description: 'Designs exclusivos e personalizados nas unhas', price: 80, duration: 90, category: 'manicure', active: true, emoji: '🎨' },
+  { id: '5', name: 'Alongamento em Gel', description: 'Extensão natural com gel para unhas mais longas e resistentes', price: 150, duration: 120, category: 'alongamento', active: true, emoji: '💎' },
+  { id: '6', name: 'Alongamento em Acrílico', description: 'Extensão ultra resistente com acabamento impecável', price: 130, duration: 120, category: 'alongamento', active: true, emoji: '🔮' },
+  { id: '7', name: 'Manutenção de Alongamento', description: 'Preenchimento e manutenção das unhas alongadas', price: 90, duration: 90, category: 'alongamento', active: true, emoji: '🛠️' },
+  { id: '8', name: 'Banho de Gel', description: 'Fortalecimento e brilho com gel de cobertura nas unhas naturais', price: 70, duration: 75, category: 'outros', active: true, emoji: '🌟' },
+];
+
+const DEFAULT_COMBOS: Combo[] = [
   {
-    id: '1',
-    name: 'Manicure Tradicional',
-    description: 'Cutícula, lixamento e esmaltação com esmalte comum',
-    price: 35,
-    duration: 45,
-    category: 'manicure',
-    active: true,
-    emoji: '💅',
-  },
-  {
-    id: '2',
-    name: 'Manicure em Gel',
-    description: 'Esmaltação em gel com maior duração e brilho intenso',
-    price: 60,
-    duration: 60,
-    category: 'manicure',
-    active: true,
-    emoji: '✨',
-  },
-  {
-    id: '3',
-    name: 'Manicure Francesa',
-    description: 'Clássica e elegante, ideal para qualquer ocasião',
-    price: 45,
-    duration: 60,
-    category: 'manicure',
-    active: true,
-    emoji: '🤍',
-  },
-  {
-    id: '4',
-    name: 'Nail Art',
-    description: 'Designs exclusivos e personalizados nas unhas',
-    price: 80,
-    duration: 90,
-    category: 'manicure',
-    active: true,
-    emoji: '🎨',
-  },
-  {
-    id: '5',
-    name: 'Alongamento em Gel',
-    description: 'Extensão natural com gel para unhas mais longas e resistentes',
-    price: 150,
+    id: 'c1',
+    name: 'Manicure + Nail Art',
+    description: 'Manicure tradicional com uma unha nail art exclusiva',
+    price: 100,
     duration: 120,
-    category: 'alongamento',
+    serviceIds: ['1', '4'],
     active: true,
-    emoji: '💎',
+    emoji: '💅🎨',
   },
   {
-    id: '6',
-    name: 'Alongamento em Acrílico',
-    description: 'Extensão ultra resistente com acabamento impecável',
-    price: 130,
-    duration: 120,
-    category: 'alongamento',
+    id: 'c2',
+    name: 'Manicure + 2 Nail Arts',
+    description: 'Manicure tradicional com duas unhas nail art personalizadas',
+    price: 120,
+    duration: 150,
+    serviceIds: ['1', '4', '4'],
     active: true,
-    emoji: '🔮',
-  },
-  {
-    id: '7',
-    name: 'Manutenção de Alongamento',
-    description: 'Preenchimento e manutenção das unhas alongadas',
-    price: 90,
-    duration: 90,
-    category: 'alongamento',
-    active: true,
-    emoji: '🛠️',
-  },
-  {
-    id: '8',
-    name: 'Banho de Gel',
-    description: 'Fortalecimento e brilho com gel de cobertura nas unhas naturais',
-    price: 70,
-    duration: 75,
-    category: 'outros',
-    active: true,
-    emoji: '🌟',
+    emoji: '✨🎨',
   },
 ];
 
@@ -100,6 +51,7 @@ const STORAGE_KEY = 'nail_sosuka_data';
 function getDefaultData(): StoreData {
   return {
     services: DEFAULT_SERVICES,
+    combos: DEFAULT_COMBOS,
     appointments: [],
     workingDays: DEFAULT_WORKING_DAYS,
     slotDuration: 60,
@@ -117,6 +69,7 @@ export function getData(): StoreData {
     const defaults = getDefaultData();
     return {
       services: parsed.services ?? defaults.services,
+      combos: parsed.combos ?? defaults.combos,
       appointments: parsed.appointments ?? defaults.appointments,
       workingDays: parsed.workingDays ?? defaults.workingDays,
       slotDuration: parsed.slotDuration ?? defaults.slotDuration,
@@ -133,67 +86,48 @@ export function saveData(data: StoreData): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-export function getServices(): Service[] {
-  return getData().services;
-}
+// ── Services ──────────────────────────────────────────────
+export function getServices(): Service[] { return getData().services; }
+export function getActiveServices(): Service[] { return getData().services.filter(s => s.active); }
+export function saveServices(services: Service[]): void { saveData({ ...getData(), services }); }
 
-export function getActiveServices(): Service[] {
-  return getData().services.filter((s) => s.active);
-}
+// ── Combos ────────────────────────────────────────────────
+export function getCombos(): Combo[] { return getData().combos; }
+export function getActiveCombos(): Combo[] { return getData().combos.filter(c => c.active); }
+export function saveCombos(combos: Combo[]): void { saveData({ ...getData(), combos }); }
 
-export function saveServices(services: Service[]): void {
-  const data = getData();
-  saveData({ ...data, services });
-}
-
-export function getAppointments(): Appointment[] {
-  return getData().appointments;
-}
+// ── Appointments ──────────────────────────────────────────
+export function getAppointments(): Appointment[] { return getData().appointments; }
 
 export function saveAppointment(appointment: Appointment): void {
   const data = getData();
-  const existing = data.appointments.findIndex((a) => a.id === appointment.id);
-  if (existing >= 0) {
-    data.appointments[existing] = appointment;
-  } else {
-    data.appointments.push(appointment);
-  }
+  const idx = data.appointments.findIndex(a => a.id === appointment.id);
+  if (idx >= 0) data.appointments[idx] = appointment;
+  else data.appointments.push(appointment);
   saveData(data);
 }
 
-export function updateAppointmentStatus(
-  id: string,
-  status: Appointment['status']
-): void {
+export function updateAppointmentStatus(id: string, status: Appointment['status']): void {
   const data = getData();
-  const idx = data.appointments.findIndex((a) => a.id === id);
-  if (idx >= 0) {
-    data.appointments[idx].status = status;
-    saveData(data);
-  }
+  const idx = data.appointments.findIndex(a => a.id === id);
+  if (idx >= 0) { data.appointments[idx].status = status; saveData(data); }
 }
 
 export function deleteAppointment(id: string): void {
   const data = getData();
-  data.appointments = data.appointments.filter((a) => a.id !== id);
+  data.appointments = data.appointments.filter(a => a.id !== id);
   saveData(data);
 }
 
-export function getWorkingDays(): WorkingDay[] {
-  return getData().workingDays;
-}
-
-export function saveWorkingDays(workingDays: WorkingDay[]): void {
-  const data = getData();
-  saveData({ ...data, workingDays });
-}
+// ── Working days ──────────────────────────────────────────
+export function getWorkingDays(): WorkingDay[] { return getData().workingDays; }
+export function saveWorkingDays(workingDays: WorkingDay[]): void { saveData({ ...getData(), workingDays }); }
 
 export function getAvailableSlots(date: string): string[] {
   const data = getData();
-  const d = new Date(date + 'T12:00:00');
-  const dayOfWeek = d.getDay();
-  const workingDay = data.workingDays.find((wd) => wd.dayOfWeek === dayOfWeek);
-  if (!workingDay || !workingDay.open) return [];
+  const dayOfWeek = new Date(date + 'T12:00:00').getDay();
+  const workingDay = data.workingDays.find(wd => wd.dayOfWeek === dayOfWeek);
+  if (!workingDay?.open) return [];
 
   const slots: string[] = [];
   const [startH, startM] = workingDay.startTime.split(':').map(Number);
@@ -202,57 +136,35 @@ export function getAvailableSlots(date: string): string[] {
   const end = endH * 60 + endM;
 
   while (current + data.slotDuration <= end) {
-    const h = Math.floor(current / 60).toString().padStart(2, '0');
-    const m = (current % 60).toString().padStart(2, '0');
-    slots.push(`${h}:${m}`);
+    slots.push(`${Math.floor(current / 60).toString().padStart(2, '0')}:${(current % 60).toString().padStart(2, '0')}`);
     current += data.slotDuration;
   }
 
-  const booked = data.appointments
-    .filter((a) => a.date === date && a.status !== 'cancelled')
-    .map((a) => a.time);
-
-  return slots.filter((s) => !booked.includes(s));
+  const booked = data.appointments.filter(a => a.date === date && a.status !== 'cancelled').map(a => a.time);
+  return slots.filter(s => !booked.includes(s));
 }
 
+// ── Auth ──────────────────────────────────────────────────
 export function isAdminLoggedIn(): boolean {
   if (typeof window === 'undefined') return false;
   return sessionStorage.getItem('admin_logged_in') === 'true';
 }
-
 export function adminLogin(password: string): boolean {
-  const data = getData();
-  if (password === data.adminPassword) {
-    sessionStorage.setItem('admin_logged_in', 'true');
-    return true;
-  }
+  if (password === getData().adminPassword) { sessionStorage.setItem('admin_logged_in', 'true'); return true; }
   return false;
 }
+export function adminLogout(): void { sessionStorage.removeItem('admin_logged_in'); }
 
-export function adminLogout(): void {
-  sessionStorage.removeItem('admin_logged_in');
-}
-
-export function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
+// ── Utils ─────────────────────────────────────────────────
+export function generateId(): string { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
 export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
 export function formatDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const d = new Date(year, month - 1, day);
-  return d.toLocaleDateString('pt-BR', {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  });
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
 }
 
 export function notifyOwnerWhatsApp(appointment: Appointment): void {
@@ -267,7 +179,5 @@ export function notifyOwnerWhatsApp(appointment: Appointment): void {
     `🕐 *Horário:* ${appointment.time}\n` +
     (appointment.notes ? `📝 *Obs:* ${appointment.notes}\n` : '') +
     `\nConfirme o agendamento respondendo esta mensagem. ✅`;
-
-  const url = `https://wa.me/${whatsapp}?text=${encodeURIComponent(msg)}`;
-  window.open(url, '_blank');
+  window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
 }
