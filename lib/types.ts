@@ -45,6 +45,7 @@ export interface WorkingDay {
 }
 
 export interface StoreData {
+  storeVersion: number;
   services: Service[];
   combos: Combo[];
   appointments: Appointment[];

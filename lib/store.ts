@@ -47,9 +47,11 @@ const DEFAULT_WORKING_DAYS: WorkingDay[] = [
 ];
 
 const STORAGE_KEY = 'nail_sosuka_data';
+const STORE_VERSION = 2; // bump quando coordenadas de origem mudarem
 
 function getDefaultData(): StoreData {
   return {
+    storeVersion: STORE_VERSION,
     services: DEFAULT_SERVICES,
     combos: DEFAULT_COMBOS,
     appointments: [],
@@ -71,7 +73,9 @@ export function getData(): StoreData {
     if (!raw) return getDefaultData();
     const parsed = JSON.parse(raw) as Partial<StoreData>;
     const defaults = getDefaultData();
-    return {
+
+    const data: StoreData = {
+      storeVersion: STORE_VERSION,
       services: parsed.services ?? defaults.services,
       combos: parsed.combos ?? defaults.combos,
       appointments: parsed.appointments ?? defaults.appointments,
@@ -80,11 +84,21 @@ export function getData(): StoreData {
       adminPassword: parsed.adminPassword ?? defaults.adminPassword,
       whatsapp: parsed.whatsapp ?? defaults.whatsapp,
       originCep: parsed.originCep ?? defaults.originCep,
-      // Migração: substitui coordenadas antigas imprecisas (Open-Meteo) pelas corretas
-      originLat: (parsed.originLat === -23.5886 || parsed.originLat === undefined) ? defaults.originLat : parsed.originLat,
-      originLon: (parsed.originLon === -48.0483 || parsed.originLon === undefined) ? defaults.originLon : parsed.originLon,
+      originLat: parsed.originLat ?? defaults.originLat,
+      originLon: parsed.originLon ?? defaults.originLon,
       originAddress: parsed.originAddress ?? defaults.originAddress,
     };
+
+    // Migração: se versão antiga, força as coordenadas corretas do código
+    if (!parsed.storeVersion || parsed.storeVersion < STORE_VERSION) {
+      data.originLat = defaults.originLat;
+      data.originLon = defaults.originLon;
+      data.originAddress = defaults.originAddress;
+      data.originCep = defaults.originCep;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    return data;
   } catch {
     return getDefaultData();
   }
