@@ -3,8 +3,8 @@
 const PRICE_PER_KM = 5;
 const FREE_RADIUS_KM = 1;
 
-// Coordenadas fixas do ponto de partida (CEP 18208-340, Botucatu/SP)
-const ORIGIN: { lat: number; lon: number } = { lat: -22.9056, lon: -48.4534 };
+// Coordenadas fixas do ponto de partida (CEP 18208-340, Jardim Alvorada, Itapetininga/SP)
+const ORIGIN: { lat: number; lon: number } = { lat: -23.5886, lon: -48.0483 };
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
