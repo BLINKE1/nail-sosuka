@@ -123,25 +123,6 @@ export default function HomePage() {
       </section>
 
 
-      {/* Política de Sinal */}
-      <section className="px-4 pb-10" style={{ background: 'linear-gradient(135deg, #12101C, #1A1030)' }}>
-        <div className="max-w-4xl mx-auto">
-          <div className="rounded-2xl p-5 flex flex-col sm:flex-row items-start gap-4" style={{ background: '#12101C', border: '1px solid rgba(212,120,156,0.2)' }}>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(212,120,156,0.12)', color: '#D4789C' }}>
-              <AlertCircle size={20} />
-            </div>
-            <div>
-              <p className="font-semibold text-sm mb-1" style={{ color: '#F0ECF0' }}>Política de Sinal ({SIGNAL_PERCENT}%)</p>
-              <p className="text-sm leading-relaxed" style={{ color: '#9A8A96' }}>
-                Para confirmar o agendamento é cobrado um sinal de <strong style={{ color: '#D4789C' }}>{SIGNAL_PERCENT}% do valor do serviço</strong>, descontado do total no dia do atendimento.
-                O sinal <strong style={{ color: '#f87171' }}>não é reembolsável</strong>.
-                Em caso de cancelamento com <strong style={{ color: '#F0ECF0' }}>mais de {CANCELLATION_HOURS}h de antecedência</strong>, {CANCELLATION_REFUND_PERCENT}% do sinal é devolvido.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Diferenciais */}
       <section className="px-4 py-16" style={{ background: '#12101C' }}>
         <div className="max-w-5xl mx-auto">
