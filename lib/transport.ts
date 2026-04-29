@@ -33,7 +33,22 @@ async function fetchJson(url: string, timeoutMs = 10000): Promise<unknown> {
   }
 }
 
-// Geocodifica cidade pelo nome usando Open-Meteo (gratuito, sem rate limit, CORS ok)
+// Photon (komoot/OpenStreetMap) — precisão de rua, CORS ok, sem rate limit rígido
+async function geocodeWithPhoton(query: string): Promise<{ lat: number; lon: number } | null> {
+  try {
+    const data = await fetchJson(
+      `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=1&lang=pt`
+    ) as { features?: Array<{ geometry: { coordinates: [number, number] } }> };
+
+    if (data.features?.length) {
+      const [lon, lat] = data.features[0].geometry.coordinates; // GeoJSON: [lon, lat]
+      return { lat, lon };
+    }
+  } catch { /* ignora */ }
+  return null;
+}
+
+// Open-Meteo — fallback apenas se Photon falhar (precisão de cidade)
 async function geocodeCity(city: string, state: string): Promise<{ lat: number; lon: number } | null> {
   try {
     const data = await fetchJson(
@@ -42,7 +57,6 @@ async function geocodeCity(city: string, state: string): Promise<{ lat: number; 
 
     if (!data.results?.length) return null;
 
-    // Prefere resultado no Brasil e no estado correto
     const match =
       data.results.find(r => r.country_code === 'BR' && r.admin1?.toLowerCase().includes(state.toLowerCase())) ??
       data.results.find(r => r.country_code === 'BR') ??
@@ -66,39 +80,35 @@ export async function lookupCep(cep: string): Promise<CepLookupResult | null> {
   const clean = cep.replace(/\D/g, '');
   if (clean.length !== 8) return null;
 
-  // ── 1. BrasilAPI v2 ──────────────────────────────────────
+  // ── 1. BrasilAPI v2 — obtém endereço ─────────────────────
   try {
     const br = await fetchJson(`https://brasilapi.com.br/api/cep/v2/${clean}`) as {
       city?: string;
       state?: string;
       neighborhood?: string;
       street?: string;
-      location?: {
-        type?: string;
-        coordinates?: { latitude?: number; longitude?: number };
-      };
+      location?: { coordinates?: { latitude?: number; longitude?: number } };
     };
 
     if (br?.city) {
       const address = [br.street, br.neighborhood, br.city].filter(Boolean).join(', ');
       const city = `${br.city}/${br.state}`;
 
-      // BrasilAPI retorna coordenadas em location.coordinates
-      const lat = br.location?.coordinates?.latitude;
-      const lon = br.location?.coordinates?.longitude;
-      if (lat && lon) {
-        return { lat, lon, address, city, cep: clean };
-      }
+      // BrasilAPI às vezes retorna coords precisas em location.coordinates
+      const bLat = br.location?.coordinates?.latitude;
+      const bLon = br.location?.coordinates?.longitude;
+      if (bLat && bLon) return { lat: bLat, lon: bLon, address, city, cep: clean };
 
-      // Sem coordenadas — geocodifica pela cidade via Open-Meteo
-      const coords = await geocodeCity(br.city, br.state ?? '');
+      // Sem coords — geocodifica endereço completo via Photon (nível de rua)
+      const fullQuery = [br.street, br.neighborhood, br.city, br.state, 'Brasil'].filter(Boolean).join(', ');
+      const coords = await geocodeWithPhoton(fullQuery) ?? await geocodeCity(br.city, br.state ?? '');
       if (coords) return { ...coords, address, city, cep: clean };
 
       return null;
     }
   } catch { /* cai no fallback */ }
 
-  // ── 2. Fallback: ViaCEP + Open-Meteo ────────────────────
+  // ── 2. Fallback: ViaCEP + Photon ─────────────────────────
   try {
     const via = await fetchJson(`https://viacep.com.br/ws/${clean}/json/`) as Record<string, string>;
     if (!via || via.erro) return null;
@@ -106,7 +116,12 @@ export async function lookupCep(cep: string): Promise<CepLookupResult | null> {
     const address = [via.logradouro, via.bairro, via.localidade].filter(Boolean).join(', ');
     const city = `${via.localidade}/${via.uf}`;
 
-    const coords = await geocodeCity(via.localidade, via.uf ?? '');
+    const fullQuery = [via.logradouro, via.bairro, via.localidade, via.uf, 'Brasil'].filter(Boolean).join(', ');
+    const coords =
+      await geocodeWithPhoton(fullQuery) ??
+      await geocodeWithPhoton(`${via.localidade}, ${via.uf}, Brasil`) ??
+      await geocodeCity(via.localidade, via.uf ?? '');
+
     if (coords) return { ...coords, address, city, cep: clean };
   } catch { /* ignora */ }
 
