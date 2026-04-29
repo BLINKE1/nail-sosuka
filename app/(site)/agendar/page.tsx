@@ -113,10 +113,15 @@ function BookingForm() {
     const clean = masked.replace(/\D/g, '');
     if (clean.length === 8) {
       setLoadingCep(true);
-      const result = await calcTransportFromCep(clean);
-      setLoadingCep(false);
-      if (result) setTransport(result);
-      else setCepError('CEP não encontrado. Verifique e tente novamente.');
+      try {
+        const result = await calcTransportFromCep(clean);
+        if (result) setTransport(result);
+        else setCepError('CEP não encontrado. Verifique e tente novamente.');
+      } catch {
+        setCepError('Erro ao buscar CEP. Verifique sua conexão e tente novamente.');
+      } finally {
+        setLoadingCep(false);
+      }
     }
   }
 
