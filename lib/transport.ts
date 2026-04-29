@@ -21,7 +21,7 @@ export function calcTransportCost(distanceKm: number): number {
   return Math.round((distanceKm - FREE_RADIUS_KM) * PRICE_PER_KM * 100) / 100;
 }
 
-async function fetchJson(url: string, timeoutMs = 8000): Promise<unknown> {
+async function fetchJson(url: string, timeoutMs = 10000): Promise<unknown> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -45,29 +45,66 @@ export async function lookupCep(cep: string): Promise<CepLookupResult | null> {
   const clean = cep.replace(/\D/g, '');
   if (clean.length !== 8) return null;
 
-  const via = await fetchJson(`https://viacep.com.br/ws/${clean}/json/`) as Record<string, string>;
-  if (!via || via.erro) return null;
+  // 1. BrasilAPI — retorna endereço + coordenadas direto do CEP
+  try {
+    const br = await fetchJson(`https://brasilapi.com.br/api/cep/v2/${clean}`) as {
+      city?: string;
+      state?: string;
+      neighborhood?: string;
+      street?: string;
+      coordinates?: { latitude?: number; longitude?: number };
+    };
 
-  const address = [via.logradouro, via.bairro, via.localidade].filter(Boolean).join(', ');
-  const city = `${via.localidade}/${via.uf}`;
+    if (br?.city) {
+      const address = [br.street, br.neighborhood, br.city].filter(Boolean).join(', ');
+      const city = `${br.city}/${br.state}`;
 
-  const query = [via.logradouro, via.bairro, via.localidade, via.uf, 'Brasil']
-    .filter(Boolean)
-    .join(', ');
+      if (br.coordinates?.latitude && br.coordinates?.longitude) {
+        return { lat: br.coordinates.latitude, lon: br.coordinates.longitude, address, city, cep: clean };
+      }
 
-  const nom = await fetchJson(
-    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`
-  ) as Array<{ lat: string; lon: string }>;
+      // BrasilAPI achou o endereço mas sem coordenadas — tenta Nominatim só pela cidade
+      try {
+        const q = `${br.city}, ${br.state}, Brasil`;
+        const nom = await fetchJson(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`
+        ) as Array<{ lat: string; lon: string }>;
+        if (Array.isArray(nom) && nom.length) {
+          return { lat: parseFloat(nom[0].lat), lon: parseFloat(nom[0].lon), address, city, cep: clean };
+        }
+      } catch { /* ignora */ }
 
-  if (!Array.isArray(nom) || !nom.length) return null;
+      return null;
+    }
+  } catch { /* cai no fallback */ }
 
-  return {
-    lat: parseFloat(nom[0].lat),
-    lon: parseFloat(nom[0].lon),
-    address,
-    city,
-    cep: clean,
-  };
+  // 2. Fallback: ViaCEP + Nominatim
+  try {
+    const via = await fetchJson(`https://viacep.com.br/ws/${clean}/json/`) as Record<string, string>;
+    if (!via || via.erro) return null;
+
+    const address = [via.logradouro, via.bairro, via.localidade].filter(Boolean).join(', ');
+    const city = `${via.localidade}/${via.uf}`;
+
+    // Tenta primeiro endereço completo, depois só cidade
+    const queries = [
+      [via.logradouro, via.bairro, via.localidade, via.uf, 'Brasil'].filter(Boolean).join(', '),
+      `${via.localidade}, ${via.uf}, Brasil`,
+    ];
+
+    for (const q of queries) {
+      try {
+        const nom = await fetchJson(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`
+        ) as Array<{ lat: string; lon: string }>;
+        if (Array.isArray(nom) && nom.length) {
+          return { lat: parseFloat(nom[0].lat), lon: parseFloat(nom[0].lon), address, city, cep: clean };
+        }
+      } catch { /* tenta próximo */ }
+    }
+  } catch { /* ignora */ }
+
+  return null;
 }
 
 export interface TransportResult {
