@@ -57,6 +57,10 @@ function getDefaultData(): StoreData {
     slotDuration: 60,
     adminPassword: 'sosuka2024',
     whatsapp: '5515997789464',
+    originCep: '18208340',
+    originLat: -23.5886,
+    originLon: -48.0483,
+    originAddress: 'Rua Kalil Yared, Jardim Alvorada, Itapetininga/SP',
   };
 }
 
@@ -75,6 +79,10 @@ export function getData(): StoreData {
       slotDuration: parsed.slotDuration ?? defaults.slotDuration,
       adminPassword: parsed.adminPassword ?? defaults.adminPassword,
       whatsapp: parsed.whatsapp ?? defaults.whatsapp,
+      originCep: parsed.originCep ?? defaults.originCep,
+      originLat: parsed.originLat ?? defaults.originLat,
+      originLon: parsed.originLon ?? defaults.originLon,
+      originAddress: parsed.originAddress ?? defaults.originAddress,
     };
   } catch {
     return getDefaultData();
@@ -142,6 +150,16 @@ export function getAvailableSlots(date: string): string[] {
 
   const booked = data.appointments.filter(a => a.date === date && a.status !== 'cancelled').map(a => a.time);
   return slots.filter(s => !booked.includes(s));
+}
+
+// ── Origin (ponto de partida) ─────────────────────────────
+export interface OriginData { cep: string; lat: number; lon: number; address: string; }
+export function getOrigin(): OriginData {
+  const d = getData();
+  return { cep: d.originCep, lat: d.originLat, lon: d.originLon, address: d.originAddress };
+}
+export function saveOrigin(o: OriginData): void {
+  saveData({ ...getData(), originCep: o.cep, originLat: o.lat, originLon: o.lon, originAddress: o.address });
 }
 
 // ── Auth ──────────────────────────────────────────────────

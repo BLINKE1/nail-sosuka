@@ -52,4 +52,8 @@ export interface StoreData {
   slotDuration: number;
   adminPassword: string;
   whatsapp: string;
+  originCep: string;
+  originLat: number;
+  originLon: number;
+  originAddress: string;
 }

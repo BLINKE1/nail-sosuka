@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { LayoutDashboard, Scissors, Calendar, LogOut, Menu, X, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Scissors, Calendar, Settings, LogOut, Menu, X, Loader2 } from 'lucide-react';
 import { isAdminLoggedIn, adminLogout } from '@/lib/store';
 
 const NAV = [
   { href: '/admin/dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
   { href: '/admin/servicos', icon: <Scissors size={18} />, label: 'Serviços' },
   { href: '/admin/agendamentos', icon: <Calendar size={18} />, label: 'Agendamentos' },
+  { href: '/admin/configuracoes', icon: <Settings size={18} />, label: 'Configurações' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

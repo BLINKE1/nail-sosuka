@@ -1,10 +1,9 @@
 'use client';
 
+import { getOrigin } from './store';
+
 const PRICE_PER_KM = 5;
 const FREE_RADIUS_KM = 1;
-
-// Coordenadas fixas do ponto de partida (CEP 18208-340, Jardim Alvorada, Itapetininga/SP)
-const ORIGIN: { lat: number; lon: number } = { lat: -23.5886, lon: -48.0483 };
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -34,9 +33,15 @@ async function fetchJson(url: string, timeoutMs = 8000): Promise<unknown> {
   }
 }
 
-interface GeoCoords { lat: number; lon: number; address: string; city: string; }
+export interface CepLookupResult {
+  lat: number;
+  lon: number;
+  address: string;
+  city: string;
+  cep: string;
+}
 
-async function geocodeCep(cep: string): Promise<GeoCoords | null> {
+export async function lookupCep(cep: string): Promise<CepLookupResult | null> {
   const clean = cep.replace(/\D/g, '');
   if (clean.length !== 8) return null;
 
@@ -56,7 +61,13 @@ async function geocodeCep(cep: string): Promise<GeoCoords | null> {
 
   if (!Array.isArray(nom) || !nom.length) return null;
 
-  return { lat: parseFloat(nom[0].lat), lon: parseFloat(nom[0].lon), address, city };
+  return {
+    lat: parseFloat(nom[0].lat),
+    lon: parseFloat(nom[0].lon),
+    address,
+    city,
+    cep: clean,
+  };
 }
 
 export interface TransportResult {
@@ -68,10 +79,11 @@ export interface TransportResult {
 }
 
 export async function calcTransportFromCep(clientCep: string): Promise<TransportResult | null> {
-  const destination = await geocodeCep(clientCep);
+  const destination = await lookupCep(clientCep);
   if (!destination) return null;
 
-  const distanceKm = haversineKm(ORIGIN.lat, ORIGIN.lon, destination.lat, destination.lon);
+  const origin = getOrigin();
+  const distanceKm = haversineKm(origin.lat, origin.lon, destination.lat, destination.lon);
   const cost = calcTransportCost(distanceKm);
 
   return {
