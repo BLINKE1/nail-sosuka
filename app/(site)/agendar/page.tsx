@@ -439,9 +439,6 @@ function BookingForm() {
                 <Car size={16} style={{ color: '#C8883A' }} />
                 <h3 className="font-semibold text-sm" style={{ color: '#F0ECF0' }}>Taxa de Deslocamento</h3>
               </div>
-              <p className="text-xs" style={{ color: '#9A8A96' }}>
-                Até 500 m é <strong style={{ color: '#4ade80' }}>grátis</strong>. Após isso, <strong style={{ color: '#F0ECF0' }}>{formatCurrency(pricePerBand)} a cada 500 m</strong> (faixa cheia).
-              </p>
               <div>
                 <label className="block text-xs font-medium mb-1.5" style={{ color: '#9A8A96' }}>Seu CEP *</label>
                 <div className="relative">
