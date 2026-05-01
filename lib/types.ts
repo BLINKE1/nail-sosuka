@@ -58,4 +58,5 @@ export interface StoreData {
   originLon: number;
   originAddress: string;
   transportPricePerBand: number;
+  recoveryEmail: string;
 }

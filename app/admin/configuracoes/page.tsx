@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapPin, Save, Loader2, CheckCircle, AlertCircle, ExternalLink, Car } from 'lucide-react';
+import { MapPin, Save, Loader2, CheckCircle, AlertCircle, ExternalLink, Car, Mail } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { getOrigin, saveOrigin, OriginData, getTransportPricePerBand, saveTransportPricePerBand } from '@/lib/store';
+import { getOrigin, saveOrigin, OriginData, getTransportPricePerBand, saveTransportPricePerBand, getRecoveryEmail, saveRecoveryEmail } from '@/lib/store';
 import { lookupCep } from '@/lib/transport';
 
 function maskCep(v: string) {
@@ -41,6 +41,10 @@ export default function ConfiguracoesPage() {
   const [pricePerBand, setPricePerBand] = useState('3');
   const [priceError, setPriceError] = useState('');
 
+  // E-mail de recuperação
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [emailSaved, setEmailSaved] = useState(false);
+
   useEffect(() => {
     const o = getOrigin();
     setOrigin(o);
@@ -48,6 +52,7 @@ export default function ConfiguracoesPage() {
     setAddressLabel(o.address);
     setCoordsInput(`${o.lat}, ${o.lon}`);
     setPricePerBand(String(getTransportPricePerBand()));
+    setRecoveryEmail(getRecoveryEmail());
   }, []);
 
   async function handleCepChange(value: string) {
@@ -215,6 +220,42 @@ export default function ConfiguracoesPage() {
             <Save size={15} /> Salvar endereço
           </button>
         </div>
+        {/* E-mail de recuperação */}
+        <div className="rounded-2xl p-6 space-y-4" style={{ background: '#12101C', border: '1px solid rgba(212,120,156,0.3)' }}>
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(212,120,156,0.15)', color: '#D4789C' }}>
+              <Mail size={18} />
+            </div>
+            <div>
+              <h2 className="font-semibold text-sm" style={{ color: '#F0ECF0' }}>E-mail de Recuperação de Senha</h2>
+              <p className="text-xs" style={{ color: '#9A8A96' }}>E-mail para onde a senha será enviada se você esquecer</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              value={recoveryEmail}
+              onChange={e => { setRecoveryEmail(e.target.value); setEmailSaved(false); }}
+              placeholder="seu@email.com"
+              className="flex-1 px-3 py-3 rounded-xl text-sm border"
+              style={{ background: '#1C1828', color: '#F0ECF0', borderColor: 'rgba(212,120,156,0.3)' }}
+            />
+            <button
+              onClick={() => { saveRecoveryEmail(recoveryEmail); setEmailSaved(true); setTimeout(() => setEmailSaved(false), 3000); }}
+              disabled={!recoveryEmail}
+              className="px-5 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all hover:scale-[1.02] disabled:opacity-40"
+              style={{ background: 'linear-gradient(135deg, #D4789C, #A0587C)', color: '#F0ECF0' }}
+            >
+              <Save size={15} /> Salvar
+            </button>
+          </div>
+          {emailSaved && (
+            <div className="flex items-center gap-2 text-sm px-3 py-2 rounded-xl" style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.3)' }}>
+              <CheckCircle size={14} /> E-mail salvo!
+            </div>
+          )}
+        </div>
+
         {/* Taxa de deslocamento */}
         <div className="rounded-2xl p-6 space-y-4" style={{ background: '#12101C', border: '1px solid rgba(200,136,58,0.3)' }}>
           <div className="flex items-center gap-2">

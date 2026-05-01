@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { adminLogin, isAdminLoggedIn } from '@/lib/store';
+import { Lock, Eye, EyeOff, Loader2, Mail } from 'lucide-react';
+import { adminLogin, isAdminLoggedIn, getData } from '@/lib/store';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -13,6 +13,8 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [recovering, setRecovering] = useState(false);
+  const [recoverMsg, setRecoverMsg] = useState('');
 
   useEffect(() => {
     if (isAdminLoggedIn()) router.replace('/admin/dashboard');
@@ -29,6 +31,29 @@ export default function AdminLoginPage() {
     } else {
       setError('Senha incorreta. Tente novamente.');
       setLoading(false);
+    }
+  }
+
+  async function handleRecover() {
+    const data = getData();
+    if (!data.recoveryEmail) {
+      setRecoverMsg('Nenhum e-mail de recuperação configurado. Entre em contato com o desenvolvedor.');
+      return;
+    }
+    setRecovering(true);
+    setRecoverMsg('');
+    try {
+      const res = await fetch('/api/recover-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.recoveryEmail, password: data.adminPassword }),
+      });
+      if (res.ok) setRecoverMsg(`Senha enviada para ${data.recoveryEmail}`);
+      else setRecoverMsg('Erro ao enviar e-mail. Tente novamente.');
+    } catch {
+      setRecoverMsg('Erro ao enviar e-mail. Verifique sua conexão.');
+    } finally {
+      setRecovering(false);
     }
   }
 
@@ -95,6 +120,26 @@ export default function AdminLoginPage() {
           >
             {loading ? <><Loader2 size={18} className="animate-spin" /> Entrando...</> : 'Entrar'}
           </button>
+
+          <button
+            type="button"
+            onClick={handleRecover}
+            disabled={recovering}
+            className="w-full py-2 rounded-full text-sm transition-all hover:opacity-80 disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ color: '#9A8A96' }}
+          >
+            {recovering ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+            Esqueci a senha
+          </button>
+
+          {recoverMsg && (
+            <p className="text-xs text-center px-3 py-2 rounded-lg" style={{
+              background: recoverMsg.includes('enviada') ? 'rgba(74,222,128,0.1)' : 'rgba(200,50,50,0.1)',
+              color: recoverMsg.includes('enviada') ? '#4ade80' : '#f87171',
+            }}>
+              {recoverMsg}
+            </p>
+          )}
         </form>
 
       </div>
