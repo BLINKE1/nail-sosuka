@@ -9,7 +9,8 @@ export async function GET(req: NextRequest) {
   if (!apiKey) return NextResponse.json({ error: 'ORS_API_KEY not set' }, { status: 500 });
 
   try {
-    const url = `https://api.openrouteservice.org/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(text)}&boundary.country=BRA&size=1`;
+    // focus.point biesa resultados para Itapetininga/SP; boundary.country limita ao Brasil
+    const url = `https://api.openrouteservice.org/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(text)}&boundary.country=BRA&focus.point.lat=-23.5906&focus.point.lon=-48.0536&size=1`;
     const res = await fetch(url, { next: { revalidate: 0 } });
     if (!res.ok) return NextResponse.json({ error: `ORS geocode error ${res.status}` }, { status: 502 });
 

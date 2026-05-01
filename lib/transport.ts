@@ -77,7 +77,7 @@ export async function lookupCep(cep: string): Promise<CepLookupResult | null> {
       if (bLat && bLon) return { lat: bLat, lon: bLon, address, city, cep: clean };
 
       // Sem coords — geocodifica via ORS (server-side, alta precisão)
-      const fullQuery = [br.street, br.neighborhood, br.city, br.state, 'Brasil'].filter(Boolean).join(', ');
+      const fullQuery = [br.street, br.neighborhood, br.city, br.state, clean, 'Brasil'].filter(Boolean).join(', ');
       const coords = await geocodeWithOrs(fullQuery) ?? await geocodeWithOrs(`${br.city}, ${br.state}, Brasil`);
       if (coords) return { ...coords, address, city, cep: clean };
 
@@ -93,7 +93,7 @@ export async function lookupCep(cep: string): Promise<CepLookupResult | null> {
     const address = [via.logradouro, via.bairro, via.localidade].filter(Boolean).join(', ');
     const city = `${via.localidade}/${via.uf}`;
 
-    const fullQuery = [via.logradouro, via.bairro, via.localidade, via.uf, 'Brasil'].filter(Boolean).join(', ');
+    const fullQuery = [via.logradouro, via.bairro, via.localidade, via.uf, clean, 'Brasil'].filter(Boolean).join(', ');
     const coords =
       await geocodeWithOrs(fullQuery) ??
       await geocodeWithOrs(`${via.localidade}, ${via.uf}, Brasil`);
