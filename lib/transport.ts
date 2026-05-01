@@ -34,39 +34,15 @@ async function fetchJson(url: string, timeoutMs = 10000): Promise<unknown> {
   }
 }
 
-// Photon (komoot/OpenStreetMap) — precisão de rua, CORS ok, sem rate limit rígido
-async function geocodeWithPhoton(query: string): Promise<{ lat: number; lon: number } | null> {
+// ORS Geocode — server-side via /api/geocode (usa API key, sem CORS, alta precisão)
+async function geocodeWithOrs(query: string): Promise<{ lat: number; lon: number } | null> {
   try {
     const data = await fetchJson(
-      `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=1&lang=pt`
-    ) as { features?: Array<{ geometry: { coordinates: [number, number] } }> };
-
-    if (data.features?.length) {
-      const [lon, lat] = data.features[0].geometry.coordinates; // GeoJSON: [lon, lat]
-      return { lat, lon };
-    }
+      `/api/geocode?text=${encodeURIComponent(query)}`,
+    ) as { lat?: number; lon?: number; error?: string };
+    if (data.lat && data.lon) return { lat: data.lat, lon: data.lon };
   } catch { /* ignora */ }
   return null;
-}
-
-// Open-Meteo — fallback apenas se Photon falhar (precisão de cidade)
-async function geocodeCity(city: string, state: string): Promise<{ lat: number; lon: number } | null> {
-  try {
-    const data = await fetchJson(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=5&language=pt&format=json`
-    ) as { results?: Array<{ latitude: number; longitude: number; country_code: string; admin1?: string }> };
-
-    if (!data.results?.length) return null;
-
-    const match =
-      data.results.find(r => r.country_code === 'BR' && r.admin1?.toLowerCase().includes(state.toLowerCase())) ??
-      data.results.find(r => r.country_code === 'BR') ??
-      data.results[0];
-
-    return { lat: match.latitude, lon: match.longitude };
-  } catch {
-    return null;
-  }
 }
 
 export interface CepLookupResult {
@@ -100,9 +76,9 @@ export async function lookupCep(cep: string): Promise<CepLookupResult | null> {
       const bLon = br.location?.coordinates?.longitude;
       if (bLat && bLon) return { lat: bLat, lon: bLon, address, city, cep: clean };
 
-      // Sem coords — geocodifica endereço completo via Photon (nível de rua)
+      // Sem coords — geocodifica via ORS (server-side, alta precisão)
       const fullQuery = [br.street, br.neighborhood, br.city, br.state, 'Brasil'].filter(Boolean).join(', ');
-      const coords = await geocodeWithPhoton(fullQuery) ?? await geocodeCity(br.city, br.state ?? '');
+      const coords = await geocodeWithOrs(fullQuery) ?? await geocodeWithOrs(`${br.city}, ${br.state}, Brasil`);
       if (coords) return { ...coords, address, city, cep: clean };
 
       return null;
@@ -119,9 +95,8 @@ export async function lookupCep(cep: string): Promise<CepLookupResult | null> {
 
     const fullQuery = [via.logradouro, via.bairro, via.localidade, via.uf, 'Brasil'].filter(Boolean).join(', ');
     const coords =
-      await geocodeWithPhoton(fullQuery) ??
-      await geocodeWithPhoton(`${via.localidade}, ${via.uf}, Brasil`) ??
-      await geocodeCity(via.localidade, via.uf ?? '');
+      await geocodeWithOrs(fullQuery) ??
+      await geocodeWithOrs(`${via.localidade}, ${via.uf}, Brasil`);
 
     if (coords) return { ...coords, address, city, cep: clean };
   } catch { /* ignora */ }
