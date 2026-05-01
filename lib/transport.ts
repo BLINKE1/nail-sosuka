@@ -137,18 +137,16 @@ export interface TransportResult {
   free: boolean;
 }
 
-async function osrmDistanceKm(
+async function orsDistanceKm(
   lat1: number, lon1: number,
   lat2: number, lon2: number,
 ): Promise<number | null> {
   try {
     const data = await fetchJson(
-      `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`,
-      8000,
-    ) as { code?: string; routes?: Array<{ distance: number }> };
-    if (data.code === 'Ok' && data.routes?.length) {
-      return data.routes[0].distance / 1000; // metros → km
-    }
+      `/api/route-distance?lat1=${lat1}&lon1=${lon1}&lat2=${lat2}&lon2=${lon2}`,
+      10000,
+    ) as { distanceKm?: number; error?: string };
+    if (data.distanceKm) return data.distanceKm;
   } catch { /* ignora */ }
   return null;
 }
@@ -160,7 +158,7 @@ export async function calcTransportFromCep(clientCep: string): Promise<Transport
   const origin = getOrigin();
 
   const distanceKm =
-    (await osrmDistanceKm(origin.lat, origin.lon, destination.lat, destination.lon)) ??
+    (await orsDistanceKm(origin.lat, origin.lon, destination.lat, destination.lon)) ??
     haversineKm(origin.lat, origin.lon, destination.lat, destination.lon);
 
   const cost = calcTransportCost(distanceKm);
