@@ -300,7 +300,9 @@ function BookingForm() {
                           style={selected ? { background: '#C8883A' } : { border: '2px solid rgba(200,136,58,0.4)' }}>
                           {selected && <Check size={12} className="text-white" />}
                         </div>
-                        <div className="text-xl shrink-0">{c.emoji}</div>
+                        <div className="text-xl shrink-0">
+                          {[...new Set(c.serviceIds)].map(id => services.find(s => s.id === id)?.emoji ?? '').join('')}
+                        </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-semibold text-sm" style={{ color: '#F0ECF0' }}>{c.name}</p>

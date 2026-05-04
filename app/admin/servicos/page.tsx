@@ -20,7 +20,6 @@ const CATEGORY_OPTIONS = [
 ] as const;
 
 const EMOJI_OPTIONS = ['💅', '🦶', '✨', '🤍', '🎨', '💎', '🔮', '🛠️', '🌟', '🌸', '👑', '🦋', '🌈', '🎀', '💍', '🌺', '⭐'];
-const COMBO_EMOJI_OPTIONS = ['💅🎨', '✨🎨', '💎✨', '🌟💅', '🎀💅', '👑✨', '🌸💎', '🦋🌟'];
 
 type CategoryFilter = 'all' | Service['category'];
 type Tab = 'servicos' | 'combos';
@@ -283,7 +282,7 @@ function ServicosTab() {
 
 const EMPTY_COMBO: Omit<Combo, 'id'> = {
   name: '', description: '', price: 0, duration: 0,
-  serviceIds: [], active: true, emoji: '💅🎨',
+  serviceIds: [], active: true,
 };
 
 function CombosTab() {
@@ -301,7 +300,7 @@ function CombosTab() {
 
   function startCreate() { setForm(EMPTY_COMBO); setEditing(null); setCreating(true); }
   function startEdit(c: Combo) {
-    setForm({ name: c.name, description: c.description, price: c.price, duration: c.duration, serviceIds: c.serviceIds, active: c.active, emoji: c.emoji });
+    setForm({ name: c.name, description: c.description, price: c.price, duration: c.duration, serviceIds: c.serviceIds, active: c.active });
     setEditing(c); setCreating(false);
   }
   function cancel() { setEditing(null); setCreating(false); }
@@ -355,20 +354,6 @@ function CombosTab() {
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-lg" style={{ color: '#F0ECF0' }}>{creating ? 'Novo Combo' : 'Editar Combo'}</h2>
               <button onClick={cancel} style={{ color: '#9A8A96' }}><X size={20} /></button>
-            </div>
-
-            {/* Emoji picker */}
-            <div>
-              <label className="block text-xs font-medium mb-2" style={{ color: '#9A8A96' }}>Ícone</label>
-              <div className="flex gap-2 flex-wrap">
-                {COMBO_EMOJI_OPTIONS.map(e => (
-                  <button key={e} onClick={() => setForm(f => ({ ...f, emoji: e }))}
-                    className="px-3 h-10 rounded-xl text-lg flex items-center justify-center transition-all hover:scale-105"
-                    style={{ background: form.emoji === e ? 'rgba(212,120,156,0.2)' : '#1C1828', border: form.emoji === e ? '2px solid #D4789C' : '1px solid rgba(212,120,156,0.15)' }}>
-                    {e}
-                  </button>
-                ))}
-              </div>
             </div>
 
             <div>
@@ -487,7 +472,9 @@ function CombosTab() {
             <div key={c.id} className="rounded-2xl p-4 transition-all"
               style={{ background: '#12101C', border: `1px solid ${c.active ? 'rgba(212,120,156,0.15)' : 'rgba(212,120,156,0.06)'}`, opacity: c.active ? 1 : 0.6 }}>
               <div className="flex items-start gap-4">
-                <span className="text-2xl shrink-0 mt-0.5">{c.emoji}</span>
+                <span className="text-2xl shrink-0 mt-0.5">
+                  {[...new Set(c.serviceIds)].map(id => serviceMap[id]?.emoji ?? '').join('')}
+                </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold text-sm" style={{ color: '#F0ECF0' }}>{c.name}</p>

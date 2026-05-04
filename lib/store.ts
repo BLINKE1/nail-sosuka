@@ -22,7 +22,6 @@ const DEFAULT_COMBOS: Combo[] = [
     duration: 120,
     serviceIds: ['1', '4'],
     active: true,
-    emoji: '💅🎨',
   },
   {
     id: 'c2',
@@ -32,7 +31,6 @@ const DEFAULT_COMBOS: Combo[] = [
     duration: 150,
     serviceIds: ['1', '4', '4'],
     active: true,
-    emoji: '✨🎨',
   },
 ];
 

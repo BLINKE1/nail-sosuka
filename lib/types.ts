@@ -17,7 +17,6 @@ export interface Combo {
   duration: number;     // duração total em minutos
   serviceIds: string[]; // IDs dos serviços incluídos
   active: boolean;
-  emoji: string;
 }
 
 export interface Appointment {
