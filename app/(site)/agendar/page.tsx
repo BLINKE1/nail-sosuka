@@ -63,9 +63,14 @@ function BookingForm() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    setServices(getActiveServices());
-    setCombos(getActiveCombos());
-    setPricePerBand(getTransportPricePerBand());
+    const load = () => {
+      setServices(getActiveServices());
+      setCombos(getActiveCombos());
+      setPricePerBand(getTransportPricePerBand());
+    };
+    load();
+    window.addEventListener('store-synced', load);
+    return () => window.removeEventListener('store-synced', load);
   }, []);
 
   useEffect(() => {

@@ -106,9 +106,22 @@ export function getData(): StoreData {
   }
 }
 
-export function saveData(data: StoreData): void {
+export function updateLocalCache(data: StoreData): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+async function pushToServer(data: StoreData): Promise<void> {
+  await fetch('/api/store', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+export function saveData(data: StoreData): void {
+  updateLocalCache(data);
+  pushToServer(data).catch(() => {});
 }
 
 // ── Services ──────────────────────────────────────────────

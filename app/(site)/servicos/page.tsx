@@ -21,7 +21,10 @@ export default function ServicosPage() {
   const [filter, setFilter] = useState<CategoryFilter>('all');
 
   useEffect(() => {
-    setServices(getActiveServices());
+    const load = () => setServices(getActiveServices());
+    load();
+    window.addEventListener('store-synced', load);
+    return () => window.removeEventListener('store-synced', load);
   }, []);
 
   const filtered = filter === 'all' ? services : services.filter((s) => s.category === filter);

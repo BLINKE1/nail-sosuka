@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
 import './globals.css';
+import StoreSync from '@/components/StoreSync';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' });
 
@@ -13,7 +14,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={`${geist.variable} h-full`}>
-      <body className="min-h-dvh antialiased">{children}</body>
+      <body className="min-h-dvh antialiased">
+        <StoreSync />
+        {children}
+      </body>
     </html>
   );
 }

@@ -25,7 +25,10 @@ export default function HomePage() {
   const [services, setServices] = useState<Service[]>([]);
 
   useEffect(() => {
-    setServices(getActiveServices().slice(0, 4));
+    const load = () => setServices(getActiveServices().slice(0, 4));
+    load();
+    window.addEventListener('store-synced', load);
+    return () => window.removeEventListener('store-synced', load);
   }, []);
 
   return (
