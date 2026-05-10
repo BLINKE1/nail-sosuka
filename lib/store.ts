@@ -208,6 +208,9 @@ export function saveTransportPricePerBand(price: number): void {
   saveData({ ...getData(), transportPricePerBand: price });
 }
 
+// ── WhatsApp ──────────────────────────────────────────
+export function getWhatsapp(): string { return getData().whatsapp; }
+
 // ── Promo images ──────────────────────────────────────
 export function getPromoImages(): PromoImage[] { return getData().promoImages; }
 export function getActivePromoImages(): PromoImage[] { return getData().promoImages.filter(p => p.active); }
