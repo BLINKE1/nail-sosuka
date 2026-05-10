@@ -1,6 +1,6 @@
 'use client';
 
-import { Service, Combo, Appointment, WorkingDay, StoreData } from './types';
+import { Service, Combo, Appointment, WorkingDay, StoreData, PromoImage } from './types';
 
 const DEFAULT_SERVICES: Service[] = [
   { id: '1', name: 'Manicure Tradicional', description: 'Cutícula, lixamento e esmaltação com esmalte comum', price: 35, duration: 45, category: 'manicure', active: true, emoji: '💅' },
@@ -44,6 +44,10 @@ const DEFAULT_WORKING_DAYS: WorkingDay[] = [
   { dayOfWeek: 6, label: 'Sábado', open: true, startTime: '09:00', endTime: '14:00' },
 ];
 
+const DEFAULT_PROMO_IMAGES: PromoImage[] = [
+  { id: 'promo-copa', src: '/promo/copa-mundo.jpeg', title: 'Unhas Copa do Mundo 🇧🇷', active: true },
+];
+
 const STORAGE_KEY = 'nail_sosuka_data';
 const STORE_VERSION = 2; // bump quando coordenadas de origem mudarem
 
@@ -63,6 +67,7 @@ function getDefaultData(): StoreData {
     originAddress: 'Rua Kalil Yared, 204, Jardim Alvorada, Itapetininga/SP',
     transportPricePerBand: 3,
     recoveryEmail: '',
+    promoImages: DEFAULT_PROMO_IMAGES,
   };
 }
 
@@ -89,6 +94,7 @@ export function getData(): StoreData {
       originAddress: parsed.originAddress ?? defaults.originAddress,
       transportPricePerBand: parsed.transportPricePerBand ?? defaults.transportPricePerBand,
       recoveryEmail: parsed.recoveryEmail ?? defaults.recoveryEmail,
+      promoImages: parsed.promoImages ?? defaults.promoImages,
     };
 
     // Migração: se versão antiga, força as coordenadas corretas do código
@@ -201,6 +207,11 @@ export function getTransportPricePerBand(): number { return getData().transportP
 export function saveTransportPricePerBand(price: number): void {
   saveData({ ...getData(), transportPricePerBand: price });
 }
+
+// ── Promo images ──────────────────────────────────────
+export function getPromoImages(): PromoImage[] { return getData().promoImages; }
+export function getActivePromoImages(): PromoImage[] { return getData().promoImages.filter(p => p.active); }
+export function savePromoImages(images: PromoImage[]): void { saveData({ ...getData(), promoImages: images }); }
 
 // ── Auth ──────────────────────────────────────────────────
 export function isAdminLoggedIn(): boolean {

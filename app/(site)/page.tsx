@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Shield, Sparkles, CalendarCheck, Star, MapPin, AlertCircle } from 'lucide-react';
 import ServiceCard from '@/components/ServiceCard';
+import PromoCarousel from '@/components/PromoCarousel';
 import { getActiveServices } from '@/lib/store';
 import { Service } from '@/lib/types';
 import { SIGNAL_PERCENT, CANCELLATION_HOURS, CANCELLATION_REFUND_PERCENT } from '@/lib/transport';
@@ -144,6 +145,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Galeria Promocional */}
+      <PromoCarousel />
 
       {/* Services preview */}
       <section className="px-4 py-16">

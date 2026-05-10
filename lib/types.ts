@@ -43,6 +43,13 @@ export interface WorkingDay {
   endTime: string;
 }
 
+export interface PromoImage {
+  id: string;
+  src: string;
+  title?: string;
+  active: boolean;
+}
+
 export interface StoreData {
   storeVersion: number;
   services: Service[];
@@ -58,4 +65,5 @@ export interface StoreData {
   originAddress: string;
   transportPricePerBand: number;
   recoveryEmail: string;
+  promoImages: PromoImage[];
 }
