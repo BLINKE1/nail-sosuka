@@ -180,7 +180,7 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto text-center">
           <p className="text-xs uppercase tracking-widest mb-2" style={{ color: '#D4789C' }}>Simples assim</p>
           <h2 className="text-2xl md:text-3xl font-bold mb-10" style={{ color: '#F0ECF0' }}>Como Agendar</h2>
-          <div className="flex flex-col md:flex-row items-start gap-8 md:gap-0">
+          <div className="flex flex-col md:flex-row items-stretch md:items-start gap-8 md:gap-0">
             {STEPS.map((step, i) => (
               <div key={step.title} className="flex flex-col md:flex-row items-center flex-1">
                 <div className="flex flex-col items-center text-center gap-3 px-4 w-full">
