@@ -174,6 +174,18 @@ function BookingForm() {
     };
     saveAppointment(appt);
     notifyOwnerWhatsApp(appt);
+
+    fetch('/api/push/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: '💅 Novo Agendamento!',
+        body: `${appt.clientName} — ${appt.serviceName} — ${appt.date} às ${appt.time}`,
+        url: '/admin/agendamentos',
+        tag: `appt-${appt.id}`,
+      }),
+    }).catch(() => {});
+
     setSubmitting(false);
     setSuccess(true);
   }

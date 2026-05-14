@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapPin, Save, Loader2, CheckCircle, AlertCircle, ExternalLink, Car, Mail } from 'lucide-react';
+import { MapPin, Save, Loader2, CheckCircle, AlertCircle, ExternalLink, Car, Mail, Bell, BellOff } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { getOrigin, saveOrigin, OriginData, getTransportPricePerBand, saveTransportPricePerBand, getRecoveryEmail, saveRecoveryEmail } from '@/lib/store';
 import { lookupCep } from '@/lib/transport';
@@ -45,6 +45,12 @@ export default function ConfiguracoesPage() {
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [emailSaved, setEmailSaved] = useState(false);
 
+  // Push notifications
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushStatus, setPushStatus] = useState<'idle' | 'subscribed' | 'denied'>('idle');
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushError, setPushError] = useState('');
+
   useEffect(() => {
     const o = getOrigin();
     setOrigin(o);
@@ -53,6 +59,16 @@ export default function ConfiguracoesPage() {
     setCoordsInput(`${o.lat}, ${o.lon}`);
     setPricePerBand(String(getTransportPricePerBand()));
     setRecoveryEmail(getRecoveryEmail());
+
+    const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    setPushSupported(supported);
+    if (supported) {
+      navigator.serviceWorker.ready.then(async (reg) => {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) setPushStatus('subscribed');
+        else if (Notification.permission === 'denied') setPushStatus('denied');
+      });
+    }
   }, []);
 
   async function handleCepChange(value: string) {
@@ -111,6 +127,55 @@ export default function ConfiguracoesPage() {
   }
 
   const previewCoords = parseCoords(coordsInput);
+
+  async function handleSubscribePush() {
+    setPushError('');
+    setPushLoading(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') { setPushStatus('denied'); return; }
+
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+      });
+
+      const res = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub.toJSON()),
+      });
+
+      if (!res.ok) throw new Error('Falha ao registrar no servidor');
+      setPushStatus('subscribed');
+    } catch (e) {
+      setPushError(e instanceof Error ? e.message : 'Erro ao ativar notificações');
+    } finally {
+      setPushLoading(false);
+    }
+  }
+
+  async function handleUnsubscribePush() {
+    setPushLoading(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch('/api/push/subscribe', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        });
+        await sub.unsubscribe();
+      }
+      setPushStatus('idle');
+    } catch {
+      // ignore
+    } finally {
+      setPushLoading(false);
+    }
+  }
 
   return (
     <AdminLayout>
@@ -299,6 +364,72 @@ export default function ConfiguracoesPage() {
               Ex: com R$ {pricePerBand || '3'} — 2 km de distância = 3 faixas × R$ {pricePerBand || '3'} = R$ {(3 * parseFloat(String(pricePerBand).replace(',', '.')) || 9).toFixed(2).replace('.', ',')}
             </p>
           </div>
+        </div>
+        {/* Notificações Push */}
+        <div className="rounded-2xl p-6 space-y-4" style={{ background: '#12101C', border: '1px solid rgba(212,120,156,0.3)' }}>
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(212,120,156,0.15)', color: '#D4789C' }}>
+              <Bell size={18} />
+            </div>
+            <div>
+              <h2 className="font-semibold text-sm" style={{ color: '#F0ECF0' }}>Notificações de Agendamento</h2>
+              <p className="text-xs" style={{ color: '#9A8A96' }}>Receba um aviso neste dispositivo a cada novo agendamento</p>
+            </div>
+          </div>
+
+          {!pushSupported && (
+            <div className="flex items-center gap-2 text-sm px-3 py-2.5 rounded-xl" style={{ background: 'rgba(248,113,113,0.08)', color: '#f87171', border: '1px solid rgba(248,113,113,0.2)' }}>
+              <AlertCircle size={14} /> Seu navegador não suporta notificações push. Use Chrome ou Safari no iOS 16.4+.
+            </div>
+          )}
+
+          {pushSupported && (
+            <>
+              {pushStatus === 'subscribed' && (
+                <div className="flex items-center gap-2 text-sm px-3 py-2.5 rounded-xl" style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.3)' }}>
+                  <CheckCircle size={14} /> Notificações ativas neste dispositivo!
+                </div>
+              )}
+              {pushStatus === 'denied' && (
+                <div className="flex items-center gap-2 text-sm px-3 py-2.5 rounded-xl" style={{ background: 'rgba(248,113,113,0.08)', color: '#f87171', border: '1px solid rgba(248,113,113,0.2)' }}>
+                  <AlertCircle size={14} /> Permissão negada. Habilite notificações nas configurações do seu navegador.
+                </div>
+              )}
+              {pushError && (
+                <p className="text-xs flex items-center gap-1" style={{ color: '#f87171' }}>
+                  <AlertCircle size={12} /> {pushError}
+                </p>
+              )}
+
+              <div className="flex gap-2">
+                {pushStatus !== 'subscribed' ? (
+                  <button
+                    onClick={handleSubscribePush}
+                    disabled={pushLoading || pushStatus === 'denied'}
+                    className="flex-1 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all hover:scale-[1.01] disabled:opacity-40"
+                    style={{ background: 'linear-gradient(135deg, #D4789C, #A0587C)', color: '#F0ECF0' }}
+                  >
+                    {pushLoading ? <Loader2 size={15} className="animate-spin" /> : <Bell size={15} />}
+                    Ativar notificações
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleUnsubscribePush}
+                    disabled={pushLoading}
+                    className="flex-1 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all hover:scale-[1.01] disabled:opacity-40"
+                    style={{ background: '#1C1828', color: '#9A8A96', border: '1px solid rgba(212,120,156,0.2)' }}
+                  >
+                    {pushLoading ? <Loader2 size={15} className="animate-spin" /> : <BellOff size={15} />}
+                    Desativar notificações
+                  </button>
+                )}
+              </div>
+
+              <p className="text-xs" style={{ color: '#9A8A96' }}>
+                💡 Para receber no celular, instale o site: abra no Chrome → menu → &quot;Adicionar à tela inicial&quot;. Depois ative as notificações aqui.
+              </p>
+            </>
+          )}
         </div>
       </div>
     </AdminLayout>
