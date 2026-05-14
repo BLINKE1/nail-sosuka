@@ -4,13 +4,20 @@ import webpush from 'web-push';
 
 const SUBSCRIPTIONS_KEY = 'push_subscriptions';
 
-webpush.setVapidDetails(
-  'mailto:contato@nailsosuka.com',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+function initVapid() {
+  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  if (!pub || !priv) throw new Error('VAPID keys not configured');
+  webpush.setVapidDetails('mailto:contato@nailsosuka.com', pub, priv);
+}
 
 export async function POST(req: NextRequest) {
+  try {
+    initVapid();
+  } catch {
+    return NextResponse.json({ error: 'Push não configurado: adicione VAPID keys na Vercel' }, { status: 503 });
+  }
+
   try {
     const payload = await req.json();
 
