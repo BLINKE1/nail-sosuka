@@ -73,10 +73,6 @@ function BookingForm() {
     return () => window.removeEventListener('store-synced', load);
   }, []);
 
-  useEffect(() => {
-    if (selectedDate) setAvailableSlots(getAvailableSlots(selectedDate));
-  }, [selectedDate]);
-
   // Computed totals
   const selectedCombo = combos.find(c => c.id === selectedComboId);
   const selectedServices = services.filter(s => selectedServiceIds.includes(s.id));
@@ -88,6 +84,10 @@ function BookingForm() {
   const totalDuration = mode === 'combo'
     ? (selectedCombo?.duration ?? 0)
     : selectedServices.reduce((sum, s) => sum + s.duration, 0);
+
+  useEffect(() => {
+    if (selectedDate) setAvailableSlots(getAvailableSlots(selectedDate, totalDuration));
+  }, [selectedDate, totalDuration]);
 
   const selectionName = mode === 'combo'
     ? (selectedCombo?.name ?? '')
