@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Lock } from 'lucide-react';
+import { Menu, X, Lock, Download } from 'lucide-react';
 
 const NAV_LINKS = [
   { href: '/', label: 'Início' },
@@ -17,15 +17,31 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
+  // PWA install
+  const [deferredPrompt, setDeferredPrompt] = useState<Event & { prompt: () => void } | null>(null);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [showIOSTip, setShowIOSTip] = useState(false);
+
+  useEffect(() => {
+    setIsIOS(/iphone|ipad|ipod/i.test(navigator.userAgent));
+    setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
+
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as Event & { prompt: () => void });
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+  useEffect(() => { setOpen(false); }, [pathname]);
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -35,14 +51,46 @@ export default function Header() {
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href);
 
+  async function handleInstall() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      setDeferredPrompt(null);
+    } else if (isIOS) {
+      setShowIOSTip(v => !v);
+    }
+  }
+
+  const showInstallButton = !isStandalone && (!!deferredPrompt || isIOS);
+
+  const InstallButton = ({ mobile = false }: { mobile?: boolean }) => (
+    <div className="relative">
+      <button
+        onClick={handleInstall}
+        className={`flex items-center gap-1.5 font-semibold transition-all duration-200 hover:opacity-80 ${
+          mobile ? 'px-8 py-3 rounded-full text-base' : 'px-4 py-2 rounded-full text-sm'
+        }`}
+        style={{ background: 'rgba(212,120,156,0.12)', color: '#D4789C', border: '1px solid rgba(212,120,156,0.3)' }}
+      >
+        <Download size={mobile ? 18 : 14} />
+        Baixar App
+      </button>
+      {showIOSTip && (
+        <div
+          className="absolute top-full mt-2 right-0 w-56 p-3 rounded-xl text-xs z-50"
+          style={{ background: '#1C1828', border: '1px solid rgba(212,120,156,0.3)', color: '#9A8A96' }}
+        >
+          No Safari: toque em <strong style={{ color: '#D4789C' }}>Compartilhar ⎙</strong> → <strong style={{ color: '#D4789C' }}>Adicionar à Tela de Início</strong>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <>
       <header
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
         style={{
-          background: scrolled
-            ? 'rgba(10,10,10,0.95)'
-            : 'rgba(10,10,10,0.6)',
+          background: scrolled ? 'rgba(10,10,10,0.95)' : 'rgba(10,10,10,0.6)',
           backdropFilter: 'blur(16px)',
           borderBottom: scrolled ? '1px solid rgba(212,120,156,0.2)' : 'none',
         }}
@@ -68,14 +116,13 @@ export default function Header() {
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                 style={{
                   color: isActive(link.href) ? '#D4789C' : '#9A8A96',
-                  background: isActive(link.href)
-                    ? 'rgba(212,120,156,0.12)'
-                    : 'transparent',
+                  background: isActive(link.href) ? 'rgba(212,120,156,0.12)' : 'transparent',
                 }}
               >
                 {link.label}
               </Link>
             ))}
+            {showInstallButton && <InstallButton />}
             <Link
               href="/agendar"
               className="ml-2 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 hover:shadow-lg"
@@ -121,9 +168,7 @@ export default function Header() {
                 key={link.href}
                 href={link.href}
                 className="text-2xl font-semibold transition-colors"
-                style={{
-                  color: isActive(link.href) ? '#D4789C' : '#F0ECF0',
-                }}
+                style={{ color: isActive(link.href) ? '#D4789C' : '#F0ECF0' }}
               >
                 {link.label}
               </Link>
@@ -139,6 +184,16 @@ export default function Header() {
             >
               Agendar Agora
             </Link>
+            {showInstallButton && (
+              <div className="relative flex flex-col items-center gap-2">
+                <InstallButton mobile />
+                {showIOSTip && (
+                  <p className="text-xs text-center px-6" style={{ color: '#9A8A96' }}>
+                    No Safari: toque em <strong style={{ color: '#D4789C' }}>Compartilhar ⎙</strong> → <strong style={{ color: '#D4789C' }}>Adicionar à Tela de Início</strong>
+                  </p>
+                )}
+              </div>
+            )}
           </nav>
         </div>
       )}
