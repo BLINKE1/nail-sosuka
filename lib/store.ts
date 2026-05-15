@@ -167,25 +167,55 @@ export function deleteAppointment(id: string): void {
 export function getWorkingDays(): WorkingDay[] { return getData().workingDays; }
 export function saveWorkingDays(workingDays: WorkingDay[]): void { saveData({ ...getData(), workingDays }); }
 
-export function getAvailableSlots(date: string): string[] {
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+export function getAvailableSlots(date: string, serviceDuration = 0): string[] {
   const data = getData();
   const dayOfWeek = new Date(date + 'T12:00:00').getDay();
   const workingDay = data.workingDays.find(wd => wd.dayOfWeek === dayOfWeek);
   if (!workingDay?.open) return [];
 
-  const slots: string[] = [];
   const [startH, startM] = workingDay.startTime.split(':').map(Number);
   const [endH, endM] = workingDay.endTime.split(':').map(Number);
-  let current = startH * 60 + startM;
-  const end = endH * 60 + endM;
+  const dayStart = startH * 60 + startM;
+  const dayEnd = endH * 60 + endM;
 
-  while (current + data.slotDuration <= end) {
-    slots.push(`${Math.floor(current / 60).toString().padStart(2, '0')}:${(current % 60).toString().padStart(2, '0')}`);
+  // Duration of the new appointment being booked (rounds up to next slotDuration boundary)
+  const newDuration = serviceDuration > 0
+    ? Math.ceil(serviceDuration / data.slotDuration) * data.slotDuration
+    : data.slotDuration;
+
+  // Existing appointments for that day (excluding cancelled)
+  const existing = data.appointments
+    .filter(a => a.date === date && a.status !== 'cancelled')
+    .map(a => ({
+      start: timeToMinutes(a.time),
+      end: timeToMinutes(a.time) + Math.ceil(a.serviceDuration / data.slotDuration) * data.slotDuration,
+    }));
+
+  const slots: string[] = [];
+  let current = dayStart;
+
+  while (current + data.slotDuration <= dayEnd) {
+    const slotStart = current;
+    const slotEnd = slotStart + newDuration;
+
+    // Slot must fit within working hours
+    if (slotEnd <= dayEnd) {
+      // No overlap with any existing appointment
+      const blocked = existing.some(appt => slotStart < appt.end && slotEnd > appt.start);
+      if (!blocked) {
+        slots.push(`${Math.floor(slotStart / 60).toString().padStart(2, '0')}:${(slotStart % 60).toString().padStart(2, '0')}`);
+      }
+    }
+
     current += data.slotDuration;
   }
 
-  const booked = data.appointments.filter(a => a.date === date && a.status !== 'cancelled').map(a => a.time);
-  return slots.filter(s => !booked.includes(s));
+  return slots;
 }
 
 // ── Origin (ponto de partida) ─────────────────────────────
