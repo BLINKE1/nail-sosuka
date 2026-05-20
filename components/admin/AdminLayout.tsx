@@ -47,7 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         style={{ background: '#12101C', borderRight: '1px solid rgba(212,120,156,0.15)' }}
       >
         <div className="p-5" style={{ borderBottom: '1px solid rgba(212,120,156,0.15)' }}>
-          <Image src="/logo.jpeg" alt="Nail Sosuka" width={120} height={42} className="h-10 w-auto object-contain mix-blend-screen" />
+          <Image src="/logo.png" alt="Nail Sosuka" width={120} height={42} className="h-10 w-auto object-contain" />
           <p className="text-xs mt-1" style={{ color: '#9A8A96' }}>Painel Admin</p>
         </div>
         <nav className="flex-1 p-3 space-y-1">
@@ -89,7 +89,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="fixed inset-0 z-50 md:hidden flex">
           <div className="w-64 flex flex-col" style={{ background: '#12101C', borderRight: '1px solid rgba(212,120,156,0.15)' }}>
             <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(212,120,156,0.15)' }}>
-              <Image src="/logo.jpeg" alt="Nail Sosuka" width={100} height={36} className="h-9 w-auto object-contain mix-blend-screen" />
+              <Image src="/logo.png" alt="Nail Sosuka" width={100} height={36} className="h-9 w-auto object-contain" />
               <button onClick={() => setSideOpen(false)} style={{ color: '#9A8A96' }}><X size={20} /></button>
             </div>
             <nav className="flex-1 p-3 space-y-1">

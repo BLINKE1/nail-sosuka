@@ -5,8 +5,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Nail Sosuka';
   const options = {
     body: data.body || '',
-    icon: '/logo.jpeg',
-    badge: '/logo.jpeg',
+    icon: '/logo.png',
+    badge: '/logo.png',
     tag: data.tag || 'nail-sosuka-notification',
     renotify: true,
     data: { url: data.url || '/admin/agendamentos' },
