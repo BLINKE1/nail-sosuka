@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapPin, Save, Loader2, CheckCircle, AlertCircle, ExternalLink, Car, Mail, Bell, BellOff } from 'lucide-react';
+import { MapPin, Save, Loader2, CheckCircle, AlertCircle, ExternalLink, Car, Mail, Bell, BellOff, QrCode, Download, Copy } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { getOrigin, saveOrigin, OriginData, getTransportPricePerBand, saveTransportPricePerBand, getRecoveryEmail, saveRecoveryEmail } from '@/lib/store';
 import { lookupCep } from '@/lib/transport';
@@ -44,6 +44,9 @@ export default function ConfiguracoesPage() {
   // E-mail de recuperação
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [emailSaved, setEmailSaved] = useState(false);
+
+  // QR Code
+  const [qrCopied, setQrCopied] = useState(false);
 
   // Push notifications
   const [pushSupported, setPushSupported] = useState(false);
@@ -430,6 +433,66 @@ export default function ConfiguracoesPage() {
               </p>
             </>
           )}
+        </div>
+        {/* Cartão Virtual & QR Code */}
+        <div className="rounded-2xl p-6 space-y-4" style={{ background: '#12101C', border: '1px solid rgba(212,120,156,0.3)' }}>
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(212,120,156,0.15)', color: '#D4789C' }}>
+              <QrCode size={18} />
+            </div>
+            <div>
+              <h2 className="font-semibold text-sm" style={{ color: '#F0ECF0' }}>Cartão Virtual & QR Code</h2>
+              <p className="text-xs" style={{ color: '#9A8A96' }}>Compartilhe o cartão 3D do seu negócio</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            {/* QR Code image */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/api/qrcode"
+              alt="QR Code Cartão Virtual"
+              className="rounded-2xl shrink-0"
+              style={{ width: 140, height: 140, imageRendering: 'pixelated', border: '1px solid rgba(212,120,156,0.2)' }}
+            />
+            <div className="flex flex-col gap-3 w-full">
+              <p className="text-sm" style={{ color: '#9A8A96' }}>
+                Imprima este QR code em panfletos, cartões físicos ou compartilhe nas redes sociais. Ao escanear, a cliente verá o cartão 3D e poderá agendar em segundos.
+              </p>
+              <div className="flex flex-col gap-2">
+                <a
+                  href="/api/qrcode"
+                  download="qrcode-nail-sosuka.png"
+                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-[1.02]"
+                  style={{ background: 'linear-gradient(135deg, #D4789C, #A0587C)', color: '#F0ECF0' }}
+                >
+                  <Download size={15} /> Baixar QR Code
+                </a>
+                <button
+                  onClick={async () => {
+                    const host = window.location.host;
+                    const protocol = window.location.protocol;
+                    await navigator.clipboard.writeText(`${protocol}//${host}/cartao`);
+                    setQrCopied(true);
+                    setTimeout(() => setQrCopied(false), 2000);
+                  }}
+                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all hover:scale-[1.02]"
+                  style={{ background: '#1C1828', color: qrCopied ? '#4ade80' : '#9A8A96', border: '1px solid rgba(212,120,156,0.2)' }}
+                >
+                  <Copy size={14} /> {qrCopied ? 'Link copiado!' : 'Copiar link do cartão'}
+                </button>
+                <a
+                  href="/cartao"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+                  style={{ color: '#D4789C' }}
+                >
+                  <ExternalLink size={14} /> Ver cartão virtual
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </AdminLayout>
