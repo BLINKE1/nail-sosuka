@@ -12,11 +12,11 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
           <div className="flex flex-col items-center md:items-start gap-3">
             <Image
-              src="/logo.jpeg"
+              src="/logo.png"
               alt="Nail Sosuka"
               width={100}
               height={36}
-              className="h-9 w-auto object-contain mix-blend-screen"
+              className="h-9 w-auto object-contain"
             />
             <p className="text-sm text-center md:text-left" style={{ color: '#9A8A96' }}>
               Arte nas unhas, elegância em cada detalhe.
