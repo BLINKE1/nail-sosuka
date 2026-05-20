@@ -16,7 +16,7 @@ export default function Footer() {
               alt="Nail Sosuka"
               width={100}
               height={36}
-              className="h-9 w-auto object-contain"
+              className="h-9 w-auto object-contain mix-blend-screen"
             />
             <p className="text-sm text-center md:text-left" style={{ color: '#9A8A96' }}>
               Arte nas unhas, elegância em cada detalhe.

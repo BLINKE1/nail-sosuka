@@ -40,7 +40,7 @@ export default function HomePage() {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full pointer-events-none" style={{ background: 'rgba(160,88,124,0.08)', filter: 'blur(80px)' }} />
 
         <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center gap-6">
-          <Image src="/logo.jpeg" alt="Nail Sosuka" width={280} height={100} className="w-52 md:w-72 h-auto object-contain" priority />
+          <Image src="/logo.jpeg" alt="Nail Sosuka" width={280} height={100} className="w-52 md:w-72 h-auto object-contain mix-blend-screen" priority />
 
           {/* Atendimento a domicílio badge — destaque principal */}
           <div
