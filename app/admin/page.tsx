@@ -69,7 +69,7 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0A0A0A' }}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <Image src="/logo.jpeg" alt="Nail Sosuka" width={140} height={50} className="h-12 w-auto object-contain mx-auto mb-4" />
+          <Image src="/logo.jpeg" alt="Nail Sosuka" width={140} height={50} className="h-12 w-auto object-contain mx-auto mb-4 mix-blend-screen" />
           <p className="text-xs uppercase tracking-widest" style={{ color: '#D4789C' }}>Área Administrativa</p>
         </div>
 
