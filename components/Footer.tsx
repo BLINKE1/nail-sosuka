@@ -32,6 +32,7 @@ export default function Footer() {
               { href: '/servicos', label: 'Serviços' },
               { href: '/agenda', label: 'Agenda' },
               { href: '/agendar', label: 'Agendar' },
+              { href: '/links', label: 'Links' },
             ].map((l) => (
               <Link
                 key={l.href}

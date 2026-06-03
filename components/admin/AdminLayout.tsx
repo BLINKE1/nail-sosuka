@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { LayoutDashboard, Scissors, Calendar, Settings, LogOut, Menu, X, Loader2, Images } from 'lucide-react';
+import { LayoutDashboard, Scissors, Calendar, Settings, LogOut, Menu, X, Loader2, Images, Link2 } from 'lucide-react';
 import { isAdminLoggedIn, adminLogout } from '@/lib/store';
 
 const NAV = [
@@ -12,6 +12,7 @@ const NAV = [
   { href: '/admin/servicos', icon: <Scissors size={18} />, label: 'Serviços' },
   { href: '/admin/agendamentos', icon: <Calendar size={18} />, label: 'Agendamentos' },
   { href: '/admin/galeria', icon: <Images size={18} />, label: 'Galeria' },
+  { href: '/admin/links', icon: <Link2 size={18} />, label: 'Links' },
   { href: '/admin/configuracoes', icon: <Settings size={18} />, label: 'Configurações' },
 ];
 

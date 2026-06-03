@@ -50,6 +50,16 @@ export interface PromoImage {
   active: boolean;
 }
 
+export interface ExternalLink {
+  id: string;
+  title: string;
+  url: string;
+  description: string;
+  emoji: string;
+  active: boolean;
+  order: number;
+}
+
 export interface StoreData {
   storeVersion: number;
   services: Service[];
@@ -66,4 +76,5 @@ export interface StoreData {
   transportPricePerBand: number;
   recoveryEmail: string;
   promoImages: PromoImage[];
+  externalLinks: ExternalLink[];
 }
