@@ -1,6 +1,6 @@
 'use client';
 
-import { Service, Combo, Appointment, WorkingDay, StoreData, PromoImage } from './types';
+import { Service, Combo, Appointment, WorkingDay, StoreData, PromoImage, ExternalLink } from './types';
 
 const DEFAULT_SERVICES: Service[] = [
   { id: '1', name: 'Manicure Tradicional', description: 'Cutícula, lixamento e esmaltação com esmalte comum', price: 35, duration: 45, category: 'manicure', active: true, emoji: '💅' },
@@ -68,6 +68,7 @@ function getDefaultData(): StoreData {
     transportPricePerBand: 3,
     recoveryEmail: '',
     promoImages: DEFAULT_PROMO_IMAGES,
+    externalLinks: [],
   };
 }
 
@@ -95,6 +96,7 @@ export function getData(): StoreData {
       transportPricePerBand: parsed.transportPricePerBand ?? defaults.transportPricePerBand,
       recoveryEmail: parsed.recoveryEmail ?? defaults.recoveryEmail,
       promoImages: parsed.promoImages ?? defaults.promoImages,
+      externalLinks: parsed.externalLinks ?? defaults.externalLinks,
     };
 
     // Migração: se versão antiga, força as coordenadas corretas do código
@@ -245,6 +247,12 @@ export function getWhatsapp(): string { return getData().whatsapp; }
 export function getPromoImages(): PromoImage[] { return getData().promoImages; }
 export function getActivePromoImages(): PromoImage[] { return getData().promoImages.filter(p => p.active); }
 export function savePromoImages(images: PromoImage[]): void { saveData({ ...getData(), promoImages: images }); }
+
+export function getExternalLinks(): ExternalLink[] { return getData().externalLinks; }
+export function getActiveExternalLinks(): ExternalLink[] {
+  return getData().externalLinks.filter(l => l.active).sort((a, b) => a.order - b.order);
+}
+export function saveExternalLinks(links: ExternalLink[]): void { saveData({ ...getData(), externalLinks: links }); }
 
 // ── Auth ──────────────────────────────────────────────────
 export function isAdminLoggedIn(): boolean {
